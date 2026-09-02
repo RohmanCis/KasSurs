@@ -1,0 +1,68 @@
+// =====================================================================
+// KasSurs — T-33: GET /api/reports/excel (FR-16, FR-17, FR-23)
+// Source of truth: .agents/2-TECH-SPEC.md (Bagian 3 tabel API + Bagian 4
+// "Alur Export Laporan") & .agents/1-PRD.md FR-16/FR-17/FR-23.
+// RBAC: middleware (T-12) menolak ANGGOTA sebelum handler — handler cukup
+// memastikan session valid (fallback defensif 401, pola T-24).
+//
+// FR-23: getOrCreateSnapshot — PDF & Excel periode sama bersumber satu
+// snapshot → angka identik antar format (mekanisme di report-snapshot.ts).
+// =====================================================================
+
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { getOrCreateSnapshot, reportQuerySchema } from "@/lib/report-snapshot";
+import { generateReportExcel } from "@/lib/export/excel";
+import type { ReportErrorResponse } from "@/lib/types";
+
+function invalidInput(message: string): NextResponse<ReportErrorResponse> {
+  return NextResponse.json({ error: "INVALID_INPUT", message }, { status: 400 });
+}
+
+function unauthorized(): NextResponse<ReportErrorResponse> {
+  // Fallback defensif — normalnya middleware (T-12) sudah menolak duluan.
+  return NextResponse.json(
+    { error: "UNAUTHORIZED", message: "Belum login atau sesi kedaluwarsa" },
+    { status: 401 },
+  );
+}
+
+export async function GET(request: Request) {
+  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
+  if (!token) return unauthorized();
+  const session = await verifySession(token);
+  if (!session) return unauthorized();
+  // RBAC ANGGOTA→403 sudah ditangani middleware (/api/reports ADMIN-only).
+
+  const url = new URL(request.url);
+  const parsed = reportQuerySchema.safeParse({
+    bulan: url.searchParams.get("bulan"),
+    tahun: url.searchParams.get("tahun"),
+    // get() → null saat tidak ada; zod optional hanya terima undefined.
+    regenerate: url.searchParams.get("regenerate") ?? undefined,
+  });
+  if (!parsed.success) {
+    return invalidInput(parsed.error.issues[0]?.message ?? "Query bulan/tahun tidak valid");
+  }
+
+  // Default periode: bulan berjalan (FR-17) — UTC, konsisten storage.
+  const now = new Date();
+  const bulan = parsed.data.bulan ?? now.getUTCMonth() + 1;
+  const tahun = parsed.data.tahun ?? now.getUTCFullYear();
+  const regenerate = parsed.data.regenerate === "true";
+
+  const payload = await getOrCreateSnapshot(bulan, tahun, session.memberId, regenerate);
+  const buf = generateReportExcel(payload);
+
+  const filename = `laporan-kas-${tahun}-${String(bulan).padStart(2, "0")}.xlsx`;
+  // BodyInit: Buffer (subclass Uint8Array<ArrayBufferLike>) tidak assignable
+  // ke BodyInit di TS 5.7 — cast eksplisit, runtime tetap Uint8Array valid.
+  return new Response(new Uint8Array(buf) as unknown as BodyInit, {
+    status: 200,
+    headers: {
+      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+    },
+  });
+}

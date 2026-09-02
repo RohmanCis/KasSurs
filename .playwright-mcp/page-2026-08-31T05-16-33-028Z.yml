@@ -1,0 +1,36 @@
+- generic [active] [ref=f1e1]:
+  - main [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - paragraph [ref=f1e4]:
+        - link "← Beranda" [ref=f1e5] [cursor=pointer]:
+          - /url: /
+      - heading "Anggota" [level=1] [ref=f1e6]
+      - paragraph [ref=f1e7]: Kelola anggota organisasi dan lihat status bayar mereka.
+    - generic [ref=f1e8]:
+      - button "Bulan sebelumnya" [ref=f1e9] [cursor=pointer]: ‹
+      - paragraph [ref=f1e10]: Agustus 2026(bulan ini)
+      - button "Bulan berikutnya" [disabled] [ref=f1e11]: ›
+    - paragraph [ref=f1e49]: 0 dari 1 anggota aktif sudah lunas periode ini.
+    - button "+ Tambah Anggota" [ref=f1e12] [cursor=pointer]
+    - generic [ref=f1e13]:
+      - generic [ref=f1e14]: Cari anggota
+      - searchbox "Cari anggota" [ref=f1e15]
+    - generic [ref=f1e16] [cursor=pointer]:
+      - checkbox "Tampilkan yang belum bayar di atas" [checked] [ref=f1e17]
+      - text: Tampilkan yang belum bayar di atas
+    - list [ref=f1e50]:
+      - listitem [ref=f1e51]:
+        - button "Admin Admin 081213024017 Belum Bayar" [expanded] [ref=f1e52] [cursor=pointer]:
+          - generic [ref=f1e53]:
+            - generic [ref=f1e54]:
+              - generic [ref=f1e55]: Admin
+              - generic [ref=f1e56]: Admin
+            - generic [ref=f1e57]: "081213024017"
+          - generic [ref=f1e58]: Belum Bayar
+        - generic [ref=f1e61]:
+          - paragraph [ref=f1e64]: Nonaktifkan Admin?
+          - paragraph [ref=f1e65]: Dia tidak bisa login lagi, tapi seluruh riwayat pembayarannya tetap tersimpan.
+          - generic [ref=f1e66]:
+            - button "Batal" [ref=f1e67] [cursor=pointer]
+            - button "Ya, Nonaktifkan" [ref=f1e68] [cursor=pointer]
+  - alert [ref=f1e59]

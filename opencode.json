@@ -1,0 +1,26 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "skills": {
+    "create-issues": {
+      "location": ".opencode/skill/create-issues"
+    },
+    "implement-task": {
+      "location": ".opencode/skill/implement-task"
+    },
+    "learnit": {
+      "location": ".opencode/skill/learnit"
+    },
+    "legacy-decoder": {
+      "location": ".opencode/skill/legacy-decoder"
+    },
+    "mini-prd": {
+      "location": ".opencode/skill/mini-prd"
+    },
+    "verify": {
+      "location": ".opencode/skill/verify"
+    },
+    "write-tech-spec": {
+      "location": ".opencode/skill/write-tech-spec"
+    }
+  }
+}

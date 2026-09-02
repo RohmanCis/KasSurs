@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KasSurs — Neo-Brutalist UI Presentation (Bricolage Grotesque Edition)</title>
+  
+  <!-- Google Fonts: Bricolage Grotesque (Single Unified Family) & JetBrains Mono (Fallback Tabular) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Bricolage Grotesque"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            neo: {
+              bg: '#FFFDF0',          /* Retro Pale Canvas */
+              surface: '#FFFFFF',     /* Crisp Card Surface */
+              black: '#000000',       /* Solid Black Borders */
+              yellow: '#FEF08A',      /* Punchy Neo Yellow */
+              green: '#86EFAC',       /* Vibrant Mint (Lunas / Success) */
+              darkgreen: '#15803D',
+              coral: '#FCA5A5',       /* Coral Red (Belum Bayar / Expense) */
+              darkred: '#B91C1C',
+              purple: '#DDD6FE',      /* Neo Lavender */
+              sky: '#BAE6FD',         /* Neo Sky Blue */
+              orange: '#FED7AA',      /* Warm Tangerine */
+              pink: '#FBCFE8',        /* Playful Pink */
+              gray: '#F3F4F6',
+            }
+          },
+          boxShadow: {
+            'neo-sm': '2px 2px 0px 0px #000000',
+            'neo': '3.5px 3.5px 0px 0px #000000',
+            'neo-lg': '6px 6px 0px 0px #000000',
+            'neo-xl': '10px 10px 0px 0px #000000',
+          },
+          borderWidth: {
+            '2.5': '2.5px',
+            '3': '3px',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #0B0F19;
+      color: #000000;
+      font-family: 'Bricolage Grotesque', sans-serif;
+      overflow-x: hidden;
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Core Neo-Brutalist Primitives */
+    .neo-box {
+      border: 2.5px solid #000000;
+      box-shadow: 4px 4px 0px 0px #000000;
+      background-color: #FFFFFF;
+      border-radius: 16px;
+    }
+
+    .neo-btn {
+      border: 2.5px solid #000000;
+      box-shadow: 3.5px 3.5px 0px 0px #000000;
+      border-radius: 14px;
+      font-weight: 700;
+      transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .neo-btn:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 5px 5px 0px 0px #000000;
+    }
+
+    .neo-btn:active {
+      transform: translate(3.5px, 3.5px);
+      box-shadow: 0px 0px 0px 0px #000000 !important;
+    }
+
+    /* Device Mockup Shell */
+    .neo-phone-frame {
+      width: 385px;
+      height: 780px;
+      background: #FFFDF0;
+      border: 3.5px solid #000000;
+      border-radius: 46px;
+      box-shadow: 12px 12px 0px 0px #000000, 0 25px 50px -12px rgba(0,0,0,0.7);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      color: #000000;
+    }
+
+    .neo-dynamic-island {
+      width: 110px;
+      height: 28px;
+      background: #000000;
+      border-radius: 20px;
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+      border: 2px solid #1E293B;
+    }
+
+    .mobile-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+    .mobile-scroll::-webkit-scrollbar-track {
+      background: #FFFDF0;
+    }
+    .mobile-scroll::-webkit-scrollbar-thumb {
+      background: #000000;
+      border-radius: 4px;
+    }
+
+    /* Marquee Animation */
+    @keyframes marquee {
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-50%); }
+    }
+    .animate-marquee {
+      display: flex;
+      width: 200%;
+      animation: marquee 16s linear infinite;
+    }
+    .animate-marquee:hover {
+      animation-play-state: paused;
+    }
+
+    /* Member Card Tactile State */
+    .neo-member-card {
+      border: 2.5px solid #000000;
+      border-radius: 14px;
+      transition: all 0.12s ease;
+      user-select: none;
+    }
+    .neo-member-card:hover {
+      transform: translate(-1px, -1px);
+    }
+    .neo-member-card:active {
+      transform: translate(2.5px, 2.5px);
+      box-shadow: 0px 0px 0px 0px #000000 !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-[#0B0F19] text-white">
+
+  <!-- TOP NEO-MARQUEE -->
+  <div class="bg-neo-yellow text-black border-b-3 border-black py-1.5 overflow-hidden text-xs font-extrabold uppercase tracking-tight">
+    <div class="animate-marquee whitespace-nowrap flex gap-8">
+      <span>⚡ KASSURS NEO-BRUTALISM (BRICOLAGE GROTESQUE)</span>
+      <span>•</span>
+      <span>🎯 1-TAP SPEED-TAP ROSTER</span>
+      <span>•</span>
+      <span>🛡️ 5X PIN LOCKOUT (15 MIN)</span>
+      <span>•</span>
+      <span>📄 EXPORT PDF & EXCEL &lt; 1 MIN</span>
+      <span>•</span>
+      <span>💰 MAX 30 MEMBERS</span>
+      <span>•</span>
+      <span>⚡ KASSURS NEO-BRUTALISM (BRICOLAGE GROTESQUE)</span>
+      <span>•</span>
+      <span>🎯 1-TAP SPEED-TAP ROSTER</span>
+      <span>•</span>
+      <span>🛡️ 5X PIN LOCKOUT (15 MIN)</span>
+      <span>•</span>
+      <span>📄 EXPORT PDF & EXCEL &lt; 1 MIN</span>
+      <span>•</span>
+      <span>💰 MAX 30 MEMBERS</span>
+    </div>
+  </div>
+
+  <!-- NAVIGATION HEADER -->
+  <header class="border-b-3 border-black bg-[#161F30] sticky top-0 z-50 px-6 py-3.5">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      
+      <!-- Logo & Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 bg-neo-green border-2.5 border-black rounded-xl flex items-center justify-center text-black shadow-neo-sm">
+          <i data-lucide="wallet-cards" class="w-6 h-6 stroke-[2.5]"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-2xl font-extrabold text-white tracking-tight">KasSurs.</h1>
+            <span class="bg-neo-pink text-black text-[10px] font-extrabold uppercase px-2 py-0.5 border-2 border-black rounded-md shadow-neo-sm tracking-wide">
+              Bricolage Single-Family
+            </span>
+          </div>
+          <p class="text-xs text-slate-300 font-medium">SSOT Compliant • Clean Lucide Icons • High Affordance</p>
+        </div>
+      </div>
+
+      <!-- View Selector -->
+      <div class="flex items-center gap-2 bg-slate-900 p-1.5 rounded-2xl border-2 border-black text-xs font-bold">
+        <button onclick="setViewMode('interactive')" id="btn-interactive" class="px-4 py-2 rounded-xl border-2 border-black bg-neo-yellow text-black shadow-neo-sm flex items-center gap-2 transition font-extrabold">
+          <i data-lucide="smartphone" class="w-4 h-4 stroke-[2.5]"></i> Interactive Device
+        </button>
+        <button onclick="setViewMode('gallery')" id="btn-gallery" class="px-4 py-2 rounded-xl border-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 transition font-bold">
+          <i data-lucide="layout-grid" class="w-4 h-4 stroke-[2]"></i> 5-Screen Overview
+        </button>
+        <button onclick="setViewMode('tokens')" id="btn-tokens" class="px-4 py-2 rounded-xl border-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 transition font-bold">
+          <i data-lucide="type" class="w-4 h-4 stroke-[2]"></i> Typography & Tokens
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT -->
+  <main class="max-w-7xl mx-auto px-4 md:px-6 py-8">
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 1: INTERACTIVE SMARTPHONE (DEFAULT) -->
+    <!-- ========================================================================= -->
+    <section id="view-interactive" class="block">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- Left Panel: Context & Screen Selectors -->
+        <div class="lg:col-span-4 space-y-5">
+          
+          <!-- Screen Selector Card -->
+          <div class="neo-box p-5 text-black">
+            <div class="flex items-center justify-between pb-3 border-b-2 border-black mb-3">
+              <span class="text-xs font-extrabold uppercase tracking-wider bg-neo-yellow px-2 py-0.5 border border-black rounded shadow-neo-sm">Navigasi Layar</span>
+              <span class="text-[11px] font-bold text-slate-600 font-mono">5 Screens</span>
+            </div>
+            
+            <p class="text-xs text-slate-700 leading-relaxed mb-4 font-medium">
+              Uji coba alur <strong>Speed-Tap Ledger</strong>. Klik pada kartu nama anggota untuk mengubah status iuran seketika (optimistic update).
+            </p>
+
+            <div class="space-y-2">
+              <button onclick="switchScreen('login')" id="nav-btn-login" class="w-full text-left p-2.5 rounded-xl border-2 border-black bg-slate-100 hover:bg-neo-purple text-black text-xs font-extrabold flex items-center justify-between transition shadow-neo-sm">
+                <span class="flex items-center gap-2">
+                  <i data-lucide="shield-check" class="w-4 h-4 stroke-[2.5]"></i> 1. Auth & PIN Lockout
+                </span>
+                <span class="text-[10px] font-mono bg-white px-1.5 py-0.5 border border-black rounded">/login</span>
+              </button>
+
+              <button onclick="switchScreen('dashboard')" id="nav-btn-dashboard" class="w-full text-left p-2.5 rounded-xl border-2 border-black bg-neo-green text-black text-xs font-extrabold flex items-center justify-between transition shadow-neo">
+                <span class="flex items-center gap-2">
+                  <i data-lucide="zap" class="w-4 h-4 stroke-[2.5]"></i> 2. Speed-Tap Ledger
+                </span>
+                <span class="text-[10px] font-mono bg-white px-1.5 py-0.5 border border-black rounded font-black">Admin Core</span>
+              </button>
+
+              <button onclick="switchScreen('expense')" id="nav-btn-expense" class="w-full text-left p-2.5 rounded-xl border-2 border-black bg-slate-100 hover:bg-neo-coral text-black text-xs font-extrabold flex items-center justify-between transition shadow-neo-sm">
+                <span class="flex items-center gap-2">
+                  <i data-lucide="receipt" class="w-4 h-4 stroke-[2.5]"></i> 3. Expense Voucher
+                </span>
+                <span class="text-[10px] font-mono bg-white px-1.5 py-0.5 border border-black rounded">/pengeluaran</span>
+              </button>
+
+              <button onclick="switchScreen('member')" id="nav-btn-member" class="w-full text-left p-2.5 rounded-xl border-2 border-black bg-slate-100 hover:bg-neo-sky text-black text-xs font-extrabold flex items-center justify-between transition shadow-neo-sm">
+                <span class="flex items-center gap-2">
+                  <i data-lucide="ticket" class="w-4 h-4 stroke-[2.5]"></i> 4. Member Passbook
+                </span>
+                <span class="text-[10px] font-mono bg-white px-1.5 py-0.5 border border-black rounded">/status</span>
+              </button>
+
+              <button onclick="switchScreen('report')" id="nav-btn-report" class="w-full text-left p-2.5 rounded-xl border-2 border-black bg-slate-100 hover:bg-neo-orange text-black text-xs font-extrabold flex items-center justify-between transition shadow-neo-sm">
+                <span class="flex items-center gap-2">
+                  <i data-lucide="file-spreadsheet" class="w-4 h-4 stroke-[2.5]"></i> 5. Laporan & Export
+                </span>
+                <span class="text-[10px] font-mono bg-white px-1.5 py-0.5 border border-black rounded">/laporan</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Live State Inspector Card -->
+          <div class="neo-box p-5 text-black bg-neo-yellow">
+            <div class="flex items-center justify-between pb-2 border-b-2 border-black mb-3">
+              <span class="text-xs font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="activity" class="w-4 h-4 stroke-[2.5]"></i> Live Ledger State
+              </span>
+              <button onclick="resetLedgerData()" class="text-[11px] font-bold bg-white px-2 py-0.5 border-2 border-black rounded shadow-neo-sm hover:bg-neo-coral active:translate-x-0.5 active:translate-y-0.5">Reset</button>
+            </div>
+
+            <div class="space-y-2 text-xs font-bold">
+              <div class="flex justify-between py-1.5 px-2.5 bg-white border-2 border-black rounded-xl">
+                <span class="text-slate-600">Total Saldo:</span>
+                <span id="live-total-saldo" class="text-sm font-extrabold text-black tabular-nums">Rp 4.250.000</span>
+              </div>
+              <div class="flex justify-between py-1.5 px-2.5 bg-white border-2 border-black rounded-xl">
+                <span class="text-slate-600">Masuk (Sep):</span>
+                <span id="live-kas-masuk" class="text-neo-darkgreen font-extrabold tabular-nums">+ Rp 690.000</span>
+              </div>
+              <div class="flex justify-between py-1.5 px-2.5 bg-white border-2 border-black rounded-xl">
+                <span class="text-slate-600">Status Lunas:</span>
+                <span id="live-lunas-count" class="text-black font-extrabold">23 / 30 (76%)</span>
+              </div>
+              <div class="flex justify-between py-1.5 px-2.5 bg-neo-coral border-2 border-black rounded-xl text-black">
+                <span>Belum Bayar:</span>
+                <span id="live-unpaid-count" class="font-extrabold">7 Orang</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Center Phone Screen Mockup -->
+        <div class="lg:col-span-8 flex justify-center">
+          
+          <div class="neo-phone-frame">
+            <!-- Dynamic Island -->
+            <div class="neo-dynamic-island"></div>
+
+            <!-- Status Bar -->
+            <div class="pt-3 px-7 pb-2 flex justify-between items-center text-xs font-extrabold text-black border-b-2.5 border-black bg-neo-bg select-none">
+              <span class="tracking-tight tabular-nums">09:41 AM</span>
+              <div class="flex items-center gap-1.5 text-[11px]">
+                <span class="bg-neo-green px-1 border border-black rounded text-[9px] font-extrabold">5G</span>
+                <i data-lucide="wifi" class="w-3.5 h-3.5 stroke-[2.5]"></i>
+                <i data-lucide="battery-charging" class="w-4 h-4 stroke-[2.5]"></i>
+              </div>
+            </div>
+
+            <!-- VIEWPORT CONTENT -->
+            <div id="screen-viewport" class="flex-1 flex flex-col overflow-hidden relative bg-neo-bg">
+
+              <!-- ========================================== -->
+              <!-- SUB-SCREEN 1: LOGIN & PIN LOCKOUT -->
+              <!-- ========================================== -->
+              <div id="subscreen-login" class="screen-item hidden flex-1 flex-col p-5 overflow-y-auto mobile-scroll justify-between">
+                <div class="space-y-4 pt-3">
+                  
+                  <!-- Brand Header -->
+                  <div class="text-center">
+                    <div class="inline-flex p-3 bg-neo-green border-2.5 border-black rounded-2xl shadow-neo mb-2">
+                      <i data-lucide="coins" class="w-7 h-7 text-black stroke-[2.5]"></i>
+                    </div>
+                    <h2 class="text-2xl font-extrabold tracking-tight text-black">KasSurs.</h2>
+                    <p class="text-xs font-semibold text-slate-700 mt-0.5">Sistem Kas Organisasi (≤30 Anggota)</p>
+                  </div>
+
+                  <!-- Lockout Alert Box (PRD FR-18) -->
+                  <div class="p-3 bg-neo-coral border-2.5 border-black rounded-xl shadow-neo-sm text-black">
+                    <div class="flex items-center gap-2 font-extrabold text-xs">
+                      <i data-lucide="shield-alert" class="w-4 h-4 stroke-[2.5] text-neo-darkred"></i> PERINGATAN LOCKOUT (5X SALAH)
+                    </div>
+                    <p class="text-[11px] font-bold text-slate-900 mt-1">
+                      Akun terkunci sementara demi keamanan. Sisa waktu: <span class="underline bg-white px-1 border border-black rounded tabular-nums font-bold">14:32</span>
+                    </p>
+                  </div>
+
+                  <!-- Form Inputs -->
+                  <div class="space-y-3">
+                    <div>
+                      <label class="text-[11px] font-extrabold uppercase tracking-wider text-black block mb-1">Nomor Handphone</label>
+                      <div class="flex border-2.5 border-black rounded-xl bg-white shadow-neo-sm overflow-hidden">
+                        <span class="bg-neo-yellow px-3 py-2 text-xs font-extrabold border-r-2.5 border-black flex items-center">+62</span>
+                        <input type="text" value="812-3456-7890" class="w-full px-3 py-2 text-xs font-bold text-black outline-none tracking-wide" readonly>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div class="flex justify-between items-center mb-1">
+                        <label class="text-[11px] font-extrabold uppercase tracking-wider text-black">PIN Keamanan (6 Digit)</label>
+                        <span class="text-[9px] bg-neo-pink px-1.5 py-0.5 border border-black rounded font-extrabold">BCRYPT HASH</span>
+                      </div>
+                      
+                      <!-- 6 Neo PIN Input Boxes -->
+                      <div class="grid grid-cols-6 gap-1.5">
+                        <div class="h-10 border-2.5 border-black bg-white rounded-lg flex items-center justify-center font-extrabold text-base shadow-neo-sm">1</div>
+                        <div class="h-10 border-2.5 border-black bg-white rounded-lg flex items-center justify-center font-extrabold text-base shadow-neo-sm">2</div>
+                        <div class="h-10 border-2.5 border-black bg-white rounded-lg flex items-center justify-center font-extrabold text-base shadow-neo-sm">3</div>
+                        <div class="h-10 border-2.5 border-black bg-white rounded-lg flex items-center justify-center font-extrabold text-base shadow-neo-sm">4</div>
+                        <div class="h-10 border-2.5 border-black bg-neo-yellow rounded-lg flex items-center justify-center font-extrabold text-base shadow-neo-sm animate-pulse">•</div>
+                        <div class="h-10 border-2.5 border-black bg-white rounded-lg flex items-center justify-center font-extrabold text-base shadow-neo-sm text-slate-400">•</div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <!-- Bottom Actions -->
+                <div class="pt-4 space-y-2">
+                  <button onclick="switchScreen('dashboard')" class="neo-btn w-full py-3 bg-neo-green text-black text-xs font-extrabold tracking-wide flex items-center justify-center gap-2">
+                    <span>MASUK SEBAGAI BENDAHARA</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4 stroke-[3]"></i>
+                  </button>
+                  <button onclick="switchScreen('member')" class="neo-btn w-full py-2.5 bg-white text-black text-xs font-bold flex items-center justify-center gap-1.5">
+                    <i data-lucide="user" class="w-3.5 h-3.5 stroke-[2.5]"></i> Masuk sebagai Anggota (Siti)
+                  </button>
+                </div>
+              </div>
+
+
+              <!-- ========================================== -->
+              <!-- SUB-SCREEN 2: SPEED-TAP DASHBOARD (ADMIN) -->
+              <!-- ========================================== -->
+              <div id="subscreen-dashboard" class="screen-item flex-1 flex flex-col overflow-hidden">
+                
+                <!-- Admin Header Bar -->
+                <div class="px-4 py-2.5 bg-neo-yellow border-b-2.5 border-black flex justify-between items-center">
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <span class="w-2.5 h-2.5 rounded-full bg-neo-green border border-black"></span>
+                      <span class="text-xs font-extrabold uppercase text-black">Bendahara Aktif</span>
+                    </div>
+                    <div class="text-xs font-bold text-slate-800 tracking-tight">Periode: September 2026</div>
+                  </div>
+                  <button onclick="showToast('Buka Pengaturan Organisasi')" class="w-8 h-8 neo-btn bg-white flex items-center justify-center text-xs">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4 stroke-[2.5]"></i>
+                  </button>
+                </div>
+
+                <!-- Scrollable Dashboard Content -->
+                <div class="flex-1 overflow-y-auto mobile-scroll p-3.5 space-y-3">
+                  
+                  <!-- Treasury Hero Card -->
+                  <div class="p-4 bg-white border-2.5 border-black rounded-2xl shadow-neo space-y-2.5">
+                    <div class="flex justify-between items-center">
+                      <span class="text-[10px] font-extrabold uppercase tracking-wider bg-neo-purple px-2 py-0.5 border border-black rounded shadow-neo-sm">
+                        TOTAL SALDO KAS AKTIF
+                      </span>
+                      <span class="text-[11px] font-bold flex items-center gap-1 text-slate-700">
+                        <i data-lucide="users" class="w-3.5 h-3.5 stroke-[2]"></i> 30 Anggota
+                      </span>
+                    </div>
+
+                    <div id="card-total-saldo" class="text-3xl font-extrabold tracking-tight text-black tabular-nums">
+                      Rp 4.250.000
+                    </div>
+
+                    <!-- Chunky Progress Meter -->
+                    <div>
+                      <div class="flex justify-between text-[11px] font-bold mb-1">
+                        <span>Iuran Terkumpul:</span>
+                        <span id="card-progress-text" class="text-black font-extrabold">23 / 30 Orang (76%)</span>
+                      </div>
+                      <div class="w-full h-3.5 bg-neo-gray border-2 border-black rounded-lg overflow-hidden p-0.5">
+                        <div id="card-progress-bar" class="h-full bg-neo-green border-r-2 border-black transition-all duration-300 rounded" style="width: 76%"></div>
+                      </div>
+                    </div>
+
+                    <!-- In / Out Breakdown -->
+                    <div class="grid grid-cols-2 gap-2 pt-2 border-t-2 border-black text-[11px] font-bold">
+                      <div class="p-2 bg-neo-green/30 border-1.5 border-black rounded-xl flex items-center gap-2">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-neo-darkgreen stroke-[2.5] shrink-0"></i>
+                        <div>
+                          <span class="text-[9px] text-slate-700 block uppercase">MASUK (SEP)</span>
+                          <span id="card-kas-masuk" class="text-xs font-extrabold tabular-nums">+ Rp 690.000</span>
+                        </div>
+                      </div>
+                      <div class="p-2 bg-neo-coral/30 border-1.5 border-black rounded-xl flex items-center gap-2">
+                        <i data-lucide="trending-down" class="w-4 h-4 text-neo-darkred stroke-[2.5] shrink-0"></i>
+                        <div>
+                          <span class="text-[9px] text-slate-700 block uppercase">KELUAR (SEP)</span>
+                          <span class="text-xs font-extrabold tabular-nums">- Rp 150.000</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Speed-Tap Roster Header & Filter Chips -->
+                  <div>
+                    <div class="flex justify-between items-center mb-2">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-extrabold uppercase text-black">Speed-Tap Roster</span>
+                        <span class="text-[9px] bg-neo-yellow border border-black px-1.5 font-bold rounded">1-Tap</span>
+                      </div>
+                      <div class="flex gap-1.5">
+                        <button onclick="filterMembers('all')" id="tab-all" class="neo-btn text-[10px] px-2.5 py-1 bg-black text-white">Semua (30)</button>
+                        <button onclick="filterMembers('unpaid')" id="tab-unpaid" class="neo-btn text-[10px] px-2.5 py-1 bg-neo-coral text-black">Belum (<span id="btn-unpaid-count">7</span>)</button>
+                      </div>
+                    </div>
+
+                    <!-- 30 Members Grid (2 Columns) -->
+                    <div id="member-roster-grid" class="grid grid-cols-2 gap-2">
+                      <!-- Rendered via JS -->
+                    </div>
+                  </div>
+
+                  <!-- Quick Navigation Shortcuts -->
+                  <div class="grid grid-cols-2 gap-2 pt-1 pb-1">
+                    <button onclick="switchScreen('expense')" class="neo-btn py-2.5 px-2 bg-neo-coral text-black text-[11px] font-extrabold flex items-center justify-center gap-1.5">
+                      <i data-lucide="receipt" class="w-4 h-4 stroke-[2.5]"></i> Catat Pengeluaran
+                    </button>
+                    <button onclick="switchScreen('report')" class="neo-btn py-2.5 px-2 bg-neo-sky text-black text-[11px] font-extrabold flex items-center justify-center gap-1.5">
+                      <i data-lucide="file-spreadsheet" class="w-4 h-4 stroke-[2.5]"></i> Laporan Kas
+                    </button>
+                  </div>
+
+                </div>
+
+                <!-- Bottom Navigation Bar -->
+                <div class="h-16 bg-white border-t-3 border-black px-4 flex justify-around items-center text-[10px] font-bold">
+                  <button class="flex flex-col items-center gap-0.5 text-black p-1 bg-neo-yellow border-2 border-black rounded-lg shadow-neo-sm">
+                    <i data-lucide="zap" class="w-4 h-4 stroke-[2.5]"></i>
+                    <span>Roster</span>
+                  </button>
+                  <button onclick="switchScreen('expense')" class="flex flex-col items-center gap-0.5 text-slate-700 hover:text-black">
+                    <i data-lucide="arrow-up-right" class="w-4 h-4 stroke-[2.5]"></i>
+                    <span>Keluar</span>
+                  </button>
+                  <button onclick="switchScreen('report')" class="flex flex-col items-center gap-0.5 text-slate-700 hover:text-black">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4 stroke-[2.5]"></i>
+                    <span>Laporan</span>
+                  </button>
+                  <button onclick="switchScreen('member')" class="flex flex-col items-center gap-0.5 text-slate-700 hover:text-black">
+                    <i data-lucide="user" class="w-4 h-4 stroke-[2.5]"></i>
+                    <span>Anggota</span>
+                  </button>
+                </div>
+
+              </div>
+
+
+              <!-- ========================================== -->
+              <!-- SUB-SCREEN 3: EXPENSE VOUCHER -->
+              <!-- ========================================== -->
+              <div id="subscreen-expense" class="screen-item hidden flex-1 flex flex-col overflow-hidden">
+                
+                <!-- Top Header -->
+                <div class="px-4 py-2.5 bg-neo-coral border-b-2.5 border-black flex items-center justify-between">
+                  <button onclick="switchScreen('dashboard')" class="neo-btn px-2.5 py-1 bg-white text-xs font-extrabold flex items-center gap-1">
+                    <i data-lucide="chevron-left" class="w-3.5 h-3.5 stroke-[3]"></i> Kembali
+                  </button>
+                  <span class="text-xs font-extrabold text-black uppercase">Voucher Kas Keluar</span>
+                  <span class="w-6"></span>
+                </div>
+
+                <div class="flex-1 overflow-y-auto mobile-scroll p-3.5 space-y-3.5">
+                  
+                  <!-- Category Chips (PRD FR-10) -->
+                  <div>
+                    <label class="text-[10px] font-extrabold uppercase tracking-wider text-black block mb-1.5">Pilih Kategori Pengeluaran</label>
+                    <div class="flex gap-1.5 overflow-x-auto pb-1 text-xs">
+                      <button onclick="selectCategory(this, 'Konsumsi')" class="cat-pill neo-btn px-3 py-1 bg-black text-white font-extrabold flex-shrink-0">Konsumsi</button>
+                      <button onclick="selectCategory(this, 'Acara')" class="cat-pill neo-btn px-3 py-1 bg-white text-black font-bold flex-shrink-0">Acara</button>
+                      <button onclick="selectCategory(this, 'ATK')" class="cat-pill neo-btn px-3 py-1 bg-white text-black font-bold flex-shrink-0">ATK</button>
+                      <button onclick="selectCategory(this, 'Sumbangan')" class="cat-pill neo-btn px-3 py-1 bg-white text-black font-bold flex-shrink-0">Sumbangan</button>
+                      <button onclick="selectCategory(this, 'Lain-lain')" class="cat-pill neo-btn px-3 py-1 bg-white text-black font-bold flex-shrink-0">Lain-lain</button>
+                    </div>
+                  </div>
+
+                  <!-- Big Numeric Voucher Card -->
+                  <div class="p-3.5 bg-white border-2.5 border-black rounded-2xl shadow-neo space-y-3 text-black">
+                    <div>
+                      <span class="text-[10px] font-extrabold uppercase tracking-wider bg-neo-yellow px-1.5 py-0.5 border border-black rounded">
+                        Nominal Kas Keluar
+                      </span>
+                      <div class="flex items-center gap-1.5 mt-1 border-2 border-black p-2 rounded-xl bg-neo-coral/20">
+                        <span class="text-xl font-extrabold">Rp</span>
+                        <input id="input-expense-amount" type="text" value="150.000" class="w-full text-2xl font-extrabold text-black outline-none bg-transparent tabular-nums">
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="text-[10px] font-extrabold uppercase tracking-wider text-black block mb-1">Deskripsi / Keperluan</label>
+                      <input id="input-expense-desc" type="text" value="Air Mineral & Snack Rapat Bulanan" class="w-full p-2.5 border-2 border-black rounded-xl text-xs font-bold text-black bg-white outline-none">
+                    </div>
+
+                    <div>
+                      <label class="text-[10px] font-extrabold uppercase tracking-wider text-black block mb-1">Tanggal Bayar</label>
+                      <div class="flex items-center gap-1.5 p-2 border-2 border-black rounded-xl bg-neo-gray text-xs font-bold text-slate-700">
+                        <i data-lucide="calendar" class="w-3.5 h-3.5 stroke-[2]"></i> 01 September 2026
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Save Button (Append-Only Audit Log) -->
+                  <button onclick="submitExpenseForm()" class="neo-btn w-full py-3.5 bg-neo-green text-black text-xs font-extrabold shadow-neo flex items-center justify-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4 stroke-[2.5]"></i> SIMPAN PENGELUARAN (AUDIT LOG)
+                  </button>
+
+                  <!-- Recent Expenses List -->
+                  <div>
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-black block mb-1.5">Riwayat Pengeluaran Bulan Ini</span>
+                    <div class="space-y-2">
+                      <div class="p-2.5 bg-white border-2 border-black rounded-xl shadow-neo-sm flex justify-between items-start text-xs text-black">
+                        <div>
+                          <span class="bg-neo-purple px-1.5 py-0.5 border border-black rounded text-[9px] font-extrabold">Konsumsi</span>
+                          <div class="font-bold mt-1 text-[11px]">Air Mineral & Snack Rapat</div>
+                          <div class="text-[9px] text-slate-500">01 Sep 2026 • Dicatat Admin</div>
+                        </div>
+                        <span class="font-extrabold text-neo-darkred text-xs tabular-nums">- Rp 150.000</span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+
+              <!-- ========================================== -->
+              <!-- SUB-SCREEN 4: MEMBER DIGITAL PASSBOOK -->
+              <!-- ========================================== -->
+              <div id="subscreen-member" class="screen-item hidden flex-1 flex flex-col overflow-hidden">
+                
+                <!-- Member Header -->
+                <div class="px-4 py-2.5 bg-neo-sky border-b-2.5 border-black flex justify-between items-center">
+                  <div>
+                    <span class="text-[10px] font-extrabold uppercase text-black block">Status Kas Anggota</span>
+                    <span class="text-xs font-extrabold text-black">Siti Aminah (Aktif)</span>
+                  </div>
+                  <button onclick="switchScreen('login')" class="neo-btn px-2 py-0.5 bg-white text-[10px] font-extrabold">
+                    Keluar
+                  </button>
+                </div>
+
+                <div class="flex-1 overflow-y-auto mobile-scroll p-3.5 space-y-3.5">
+                  
+                  <!-- Passbook Big Coupon Badge -->
+                  <div class="p-3.5 bg-neo-green border-3 border-black rounded-2xl shadow-neo text-black text-center relative overflow-hidden">
+                    <div class="flex justify-between text-[10px] font-extrabold uppercase mb-1">
+                      <span>BUKU KAS DIGITAL</span>
+                      <span class="tabular-nums font-bold">TH. 2026</span>
+                    </div>
+
+                    <div class="my-2 p-2.5 bg-white border-2 border-black rounded-xl shadow-neo-sm flex items-center justify-center gap-2">
+                      <i data-lucide="check-circle-2" class="w-5 h-5 text-neo-darkgreen stroke-[2.5] shrink-0"></i>
+                      <div class="text-left">
+                        <div class="text-xs font-extrabold tracking-tight text-neo-darkgreen">✓ STATUS: LUNAS SEPTEMBER</div>
+                        <div class="text-[10px] font-bold text-black mt-0.5 tabular-nums">Rp 30.000 • 01 Sep 2026</div>
+                      </div>
+                    </div>
+
+                    <p class="text-[10px] font-bold text-slate-800">
+                      Iuran Anda tercatat rapi di sistem kas organisasi.
+                    </p>
+                  </div>
+
+                  <!-- 12-Month Matrix Grid (Jan-Dec 2026) -->
+                  <div class="p-3.5 bg-white border-2.5 border-black rounded-2xl shadow-neo text-black">
+                    <div class="flex justify-between items-center mb-2.5">
+                      <span class="text-xs font-extrabold uppercase">Matriks Iuran 12 Bulan</span>
+                      <span class="text-[10px] font-extrabold bg-neo-yellow px-1.5 py-0.5 border border-black rounded">9/12 Lunas</span>
+                    </div>
+
+                    <div class="grid grid-cols-4 gap-1.5 text-center text-[10px] font-extrabold">
+                      <div class="p-1.5 bg-neo-green border-1.5 border-black rounded-lg shadow-neo-sm">JAN<br><span class="text-[9px] font-bold tabular-nums">✓ 30k</span></div>
+                      <div class="p-1.5 bg-neo-green border-1.5 border-black rounded-lg shadow-neo-sm">FEB<br><span class="text-[9px] font-bold tabular-nums">✓ 30k</span></div>
+                      <div class="p-1.5 bg-neo-green border-1.5 border-black rounded-lg shadow-neo-sm">MAR<br><span class="text-[9px] font-bold tabular-nums">✓ 30k</span></div>
+                      <div class="p-1.5 bg-neo-green border-1.5 border-black rounded-lg shadow-neo-sm">APR<br><span class="text-[9px] font-bold tabular-nums">✓ 30k</span></div>
+                      <div class="p-1.5 bg-neo-green border-1.5 border-black rounded-lg shadow-neo-sm">MEI<br><span class="text-[9px] font-bold tabular-nums">✓ 30k</span></div>
+                      <div class="p-1.5 bg-neo-green border-1.5 border-black rounded-lg shadow-neo-sm">JUN<br><span class="text-[9px] font-bold tabular-nums">✓ 30k</span></div>
+                      <div class="p-1.5 bg-neo-green border-1.5 border-black rounded-lg shadow-neo-sm">JUL<br><span class="text-[9px] font-bold tabular-nums">✓ 30k</span></div>
+                      <div class="p-1.5 bg-neo-green border-1.5 border-black rounded-lg shadow-neo-sm">AGU<br><span class="text-[9px] font-bold tabular-nums">✓ 30k</span></div>
+                      <div class="p-1.5 bg-black text-neo-yellow border-1.5 border-black rounded-lg shadow-neo-sm">SEP<br><span class="text-[9px] font-bold tabular-nums">✓ 30k</span></div>
+                      <div class="p-1.5 bg-neo-gray border-1.5 border-black rounded-lg text-slate-400">OKT<br><span class="text-[9px]">-</span></div>
+                      <div class="p-1.5 bg-neo-gray border-1.5 border-black rounded-lg text-slate-400">NOV<br><span class="text-[9px]">-</span></div>
+                      <div class="p-1.5 bg-neo-gray border-1.5 border-black rounded-lg text-slate-400">DES<br><span class="text-[9px]">-</span></div>
+                    </div>
+                  </div>
+
+                  <!-- General Treasury Transparency (PRD FR-14) -->
+                  <div class="p-3 bg-neo-yellow border-2.5 border-black rounded-2xl shadow-neo-sm text-black text-xs font-bold space-y-1.5">
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider block">Transparansi Saldo Komunitas</span>
+                    <div class="flex justify-between items-center py-1 border-b border-black">
+                      <span>Total Kas Bersama:</span>
+                      <span class="font-extrabold text-sm tabular-nums">Rp 4.250.000</span>
+                    </div>
+                    <div class="text-[10px] text-slate-800">
+                      • Pengeluaran terakhir: <span class="font-extrabold tabular-nums">-Rp 150.000 (Konsumsi)</span>
+                    </div>
+                  </div>
+
+                </div>
+
+                <!-- Bottom Shortcut -->
+                <div class="p-2.5 bg-white border-t-2.5 border-black text-center">
+                  <button onclick="switchScreen('dashboard')" class="text-xs font-extrabold text-black hover:underline">
+                    ← Kembali ke Tampilan Bendahara
+                  </button>
+                </div>
+              </div>
+
+
+              <!-- ========================================== -->
+              <!-- SUB-SCREEN 5: LAPORAN & EXPORT -->
+              <!-- ========================================== -->
+              <div id="subscreen-report" class="screen-item hidden flex-1 flex flex-col overflow-hidden">
+                
+                <!-- Header -->
+                <div class="px-4 py-2.5 bg-neo-orange border-b-2.5 border-black flex items-center justify-between">
+                  <button onclick="switchScreen('dashboard')" class="neo-btn px-2.5 py-1 bg-white text-xs font-extrabold flex items-center gap-1">
+                    <i data-lucide="chevron-left" class="w-3.5 h-3.5 stroke-[3]"></i> Kembali
+                  </button>
+                  <span class="text-xs font-extrabold text-black uppercase">Laporan & Unduh</span>
+                  <span class="w-6"></span>
+                </div>
+
+                <div class="flex-1 overflow-y-auto mobile-scroll p-3.5 space-y-3.5">
+                  
+                  <!-- Filter Periode (PRD FR-17) -->
+                  <div class="p-3.5 bg-white border-2.5 border-black rounded-2xl shadow-neo text-black">
+                    <label class="text-[10px] font-extrabold uppercase tracking-wider block mb-1.5">Pilih Periode Laporan</label>
+                    <div class="grid grid-cols-2 gap-2">
+                      <select class="p-2 border-2 border-black rounded-xl text-xs font-bold bg-neo-yellow outline-none">
+                        <option>September 2026</option>
+                        <option>Agustus 2026</option>
+                        <option>Juli 2026</option>
+                      </select>
+                      <select class="p-2 border-2 border-black rounded-xl text-xs font-bold bg-white outline-none">
+                        <option>Semua Kategori</option>
+                        <option>Konsumsi</option>
+                        <option>Acara</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Financial Statement Card -->
+                  <div class="p-3.5 bg-neo-purple border-2.5 border-black rounded-2xl shadow-neo text-black text-xs font-bold space-y-2">
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider block">Ringkasan Arus Kas (Sep 2026)</span>
+
+                    <div class="flex justify-between py-1 bg-white p-2 border-1.5 border-black rounded-lg">
+                      <span>Total Kas Masuk (23 Org)</span>
+                      <span class="text-neo-darkgreen font-extrabold tabular-nums">+ Rp 690.000</span>
+                    </div>
+
+                    <div class="flex justify-between py-1 bg-white p-2 border-1.5 border-black rounded-lg">
+                      <span>Total Kas Keluar (1 Item)</span>
+                      <span class="text-neo-darkred font-extrabold tabular-nums">- Rp 150.000</span>
+                    </div>
+
+                    <div class="flex justify-between py-1.5 bg-neo-yellow p-2 border-2 border-black rounded-lg text-sm">
+                      <span>Surplus Bersih:</span>
+                      <span class="font-extrabold tabular-nums">+ Rp 540.000</span>
+                    </div>
+                  </div>
+
+                  <!-- Dual Direct Export Cards (PRD FR-15 & FR-16) -->
+                  <div class="space-y-2.5">
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-black block">Unduh Laporan Cepat (&lt; 1 Menit)</span>
+
+                    <!-- PDF Button -->
+                    <button onclick="simulateDownload('PDF')" class="neo-btn w-full p-3 bg-neo-coral text-black flex items-center justify-between text-left">
+                      <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 bg-white border-2 border-black rounded-lg flex items-center justify-center">
+                          <i data-lucide="file-text" class="w-5 h-5 stroke-[2.5] text-neo-darkred"></i>
+                        </div>
+                        <div>
+                          <div class="text-xs font-extrabold">EXPORT LAPORAN PDF</div>
+                          <div class="text-[10px] font-medium text-slate-800">Format resmi rekap kas siap share WA</div>
+                        </div>
+                      </div>
+                      <i data-lucide="download" class="w-4 h-4 stroke-[2.5]"></i>
+                    </button>
+
+                    <!-- Excel Button -->
+                    <button onclick="simulateDownload('Excel')" class="neo-btn w-full p-3 bg-neo-green text-black flex items-center justify-between text-left">
+                      <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 bg-white border-2 border-black rounded-lg flex items-center justify-center">
+                          <i data-lucide="file-spreadsheet" class="w-5 h-5 stroke-[2.5] text-neo-darkgreen"></i>
+                        </div>
+                        <div>
+                          <div class="text-xs font-extrabold">EXPORT DATA EXCEL (.XLSX)</div>
+                          <div class="text-[10px] font-medium text-slate-800">Data mentah transaksi untuk backup</div>
+                        </div>
+                      </div>
+                      <i data-lucide="download" class="w-4 h-4 stroke-[2.5]"></i>
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+
+            <!-- In-App Neo Toast Banner -->
+            <div id="inapp-toast" class="absolute top-14 left-4 right-4 bg-neo-yellow border-3 border-black text-black px-3.5 py-2.5 rounded-xl text-xs font-extrabold shadow-neo-lg flex items-center justify-between transform -translate-y-28 opacity-0 transition-all duration-200 z-50">
+              <span id="toast-message">Pembayaran Berhasil!</span>
+              <i data-lucide="check" class="w-4 h-4 stroke-[3]"></i>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 2: 5-SCREEN SIDE-BY-SIDE GALLERY -->
+    <!-- ========================================================================= -->
+    <section id="view-gallery" class="hidden">
+      <div class="mb-6">
+        <h2 class="text-xl font-extrabold text-white">Neo-Brutalist 5-Screen Overview</h2>
+        <p class="text-xs text-slate-400 mt-0.5">Seluruh 5 layar dalam satu bidikan komparatif beresolusi tinggi (Bricolage Grotesque System).</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-5">
+        
+        <!-- Screen 1 Preview -->
+        <div class="neo-box p-3 bg-[#161F30] text-white">
+          <span class="text-xs font-extrabold text-neo-yellow block mb-2">1. AUTH & LOCKOUT</span>
+          <div class="bg-neo-bg text-black p-3 rounded-xl border-2 border-black h-[400px] flex flex-col justify-between text-xs font-bold">
+            <div>
+              <div class="text-center font-extrabold text-lg">KasSurs.</div>
+              <div class="text-center text-[10px] font-bold text-slate-600">No HP + 6-Digit PIN</div>
+              <div class="mt-3 p-2 bg-neo-coral border-2 border-black rounded text-[10px] font-extrabold flex items-center gap-1">
+                <i data-lucide="shield-alert" class="w-3.5 h-3.5 stroke-[2.5]"></i> 5x Salah: Lockout 15 Mnt
+              </div>
+              <div class="mt-3 p-2 bg-white border-2 border-black rounded text-[10px] tabular-nums font-bold">
+                +62 812-3456-7890
+              </div>
+              <div class="grid grid-cols-6 gap-1 mt-2">
+                <span class="h-6 bg-white border border-black text-center leading-6 font-extrabold">1</span>
+                <span class="h-6 bg-white border border-black text-center leading-6 font-extrabold">2</span>
+                <span class="h-6 bg-white border border-black text-center leading-6 font-extrabold">3</span>
+                <span class="h-6 bg-white border border-black text-center leading-6 font-extrabold">4</span>
+                <span class="h-6 bg-neo-yellow border border-black text-center leading-6 font-extrabold">•</span>
+                <span class="h-6 bg-white border border-black text-center leading-6 font-extrabold">•</span>
+              </div>
+            </div>
+            <div class="py-2 bg-neo-green border-2 border-black rounded font-extrabold text-center text-[10px]">
+              MASUK SISTEM
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 2 Preview -->
+        <div class="neo-box p-3 bg-[#161F30] text-white">
+          <span class="text-xs font-extrabold text-neo-green block mb-2">2. SPEED-TAP ROSTER</span>
+          <div class="bg-neo-bg text-black p-3 rounded-xl border-2 border-black h-[400px] flex flex-col justify-between text-xs font-bold">
+            <div>
+              <div class="p-2 bg-white border-2 border-black rounded shadow-neo-sm">
+                <span class="text-[9px] font-extrabold bg-neo-purple px-1 border rounded">SALDO KAS</span>
+                <div class="font-extrabold text-sm tabular-nums">Rp 4.250.000</div>
+                <div class="w-full h-2 bg-neo-gray border border-black rounded mt-1 overflow-hidden">
+                  <div class="w-3/4 h-full bg-neo-green"></div>
+                </div>
+              </div>
+              <div class="mt-2 text-[10px] font-extrabold">Speed-Tap Grid:</div>
+              <div class="grid grid-cols-2 gap-1 mt-1 text-[9px] font-bold">
+                <div class="p-1 bg-white border border-black rounded text-neo-darkred">Ahmad Fauzi<br><span class="font-normal text-[8px]">Tap Rp 30k</span></div>
+                <div class="p-1 bg-neo-green border border-black rounded">Siti Aminah<br><span class="font-normal text-[8px]">✓ Lunas</span></div>
+                <div class="p-1 bg-neo-green border border-black rounded">Budi S.<br><span class="font-normal text-[8px]">✓ Lunas</span></div>
+                <div class="p-1 bg-white border border-black rounded text-neo-darkred">Citra Dewi<br><span class="font-normal text-[8px]">Tap Rp 30k</span></div>
+              </div>
+            </div>
+            <div class="flex gap-1 text-[8px]">
+              <span class="flex-1 py-1 bg-neo-coral border border-black rounded text-center font-extrabold">📤 Keluar</span>
+              <span class="flex-1 py-1 bg-neo-sky border border-black rounded text-center font-extrabold">📊 Laporan</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 3 Preview -->
+        <div class="neo-box p-3 bg-[#161F30] text-white">
+          <span class="text-xs font-extrabold text-neo-coral block mb-2">3. EXPENSE VOUCHER</span>
+          <div class="bg-neo-bg text-black p-3 rounded-xl border-2 border-black h-[400px] flex flex-col justify-between text-xs font-bold">
+            <div>
+              <div class="font-extrabold text-xs uppercase">Catat Pengeluaran</div>
+              <div class="flex gap-1 text-[8px] mt-1.5 font-bold">
+                <span class="bg-black text-white px-1.5 py-0.5 rounded border">Konsumsi</span>
+                <span class="bg-white px-1.5 py-0.5 rounded border">Acara</span>
+                <span class="bg-white px-1.5 py-0.5 rounded border">ATK</span>
+              </div>
+              <div class="mt-2 p-2 bg-white border-2 border-black rounded shadow-neo-sm">
+                <span class="text-[9px] text-slate-600">Nominal:</span>
+                <div class="font-extrabold text-sm text-neo-darkred tabular-nums">Rp 150.000</div>
+              </div>
+              <div class="mt-1.5 p-1.5 bg-white border border-black rounded text-[9px]">
+                Air & Snack Rapat Bulanan
+              </div>
+            </div>
+            <div class="py-2 bg-neo-green border-2 border-black rounded font-extrabold text-center text-[10px]">
+              SIMPAN PENGELUARAN
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 4 Preview -->
+        <div class="neo-box p-3 bg-[#161F30] text-white">
+          <span class="text-xs font-extrabold text-neo-sky block mb-2">4. MEMBER PASSBOOK</span>
+          <div class="bg-neo-bg text-black p-3 rounded-xl border-2 border-black h-[400px] flex flex-col justify-between text-xs font-bold">
+            <div>
+              <div class="text-[10px] text-slate-700 font-bold">Buku Kas: Siti Aminah</div>
+              <div class="p-2 bg-neo-green border-2 border-black rounded-lg shadow-neo-sm text-center mt-1.5">
+                <div class="font-extrabold text-[10px] text-neo-darkgreen">✓ LUNAS SEP 2026</div>
+                <div class="text-[8px] font-bold tabular-nums">Rp 30.000 • 01 Sep</div>
+              </div>
+              <div class="mt-2 text-[10px] font-extrabold">12-Month Matrix:</div>
+              <div class="grid grid-cols-4 gap-0.5 text-center text-[8px] mt-1 font-bold">
+                <span class="p-0.5 bg-neo-green border rounded">JAN✓</span>
+                <span class="p-0.5 bg-neo-green border rounded">FEB✓</span>
+                <span class="p-0.5 bg-neo-green border rounded">MAR✓</span>
+                <span class="p-0.5 bg-neo-green border rounded">APR✓</span>
+                <span class="p-0.5 bg-neo-green border rounded">MEI✓</span>
+                <span class="p-0.5 bg-neo-green border rounded">JUN✓</span>
+                <span class="p-0.5 bg-neo-green border rounded">JUL✓</span>
+                <span class="p-0.5 bg-neo-green border rounded">AGU✓</span>
+                <span class="p-0.5 bg-black text-neo-yellow rounded">SEP✓</span>
+                <span class="p-0.5 bg-neo-gray border rounded text-slate-400">OKT-</span>
+                <span class="p-0.5 bg-neo-gray border rounded text-slate-400">NOV-</span>
+                <span class="p-0.5 bg-neo-gray border rounded text-slate-400">DES-</span>
+              </div>
+            </div>
+            <div class="text-[8px] text-center p-1 bg-neo-yellow border rounded font-extrabold tabular-nums">
+              Saldo Kas: Rp 4.250.000
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen 5 Preview -->
+        <div class="neo-box p-3 bg-[#161F30] text-white">
+          <span class="text-xs font-extrabold text-neo-orange block mb-2">5. LAPORAN & UNDUH</span>
+          <div class="bg-neo-bg text-black p-3 rounded-xl border-2 border-black h-[400px] flex flex-col justify-between text-xs font-bold">
+            <div>
+              <div class="font-extrabold text-xs uppercase">Rekap Keuangan</div>
+              <div class="p-2 bg-neo-purple border border-black rounded mt-1.5 text-[9px] space-y-1">
+                <div class="flex justify-between"><span>Masuk:</span><span class="text-neo-darkgreen font-extrabold tabular-nums">+Rp 690k</span></div>
+                <div class="flex justify-between"><span>Keluar:</span><span class="text-neo-darkred font-extrabold tabular-nums">-Rp 150k</span></div>
+                <div class="flex justify-between pt-1 border-t font-extrabold"><span>Surplus:</span><span class="tabular-nums">+Rp 540k</span></div>
+              </div>
+              <div class="space-y-1.5 mt-3">
+                <div class="p-1.5 bg-neo-coral border border-black rounded text-[9px] font-extrabold flex items-center justify-between">
+                  <span>📄 Unduh PDF (WA)</span>
+                  <i data-lucide="download" class="w-3 h-3"></i>
+                </div>
+                <div class="p-1.5 bg-neo-green border border-black rounded text-[9px] font-extrabold flex items-center justify-between">
+                  <span>📊 Unduh Excel (.xlsx)</span>
+                  <i data-lucide="download" class="w-3 h-3"></i>
+                </div>
+              </div>
+            </div>
+            <div class="text-[8px] text-center font-bold text-slate-600">
+              Generated in &lt; 1 min
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- VIEW 3: TYPOGRAPHY & DESIGN TOKENS -->
+    <!-- ========================================================================= -->
+    <section id="view-tokens" class="hidden">
+      <div class="neo-box p-6 bg-[#161F30] text-white space-y-8">
+        <div>
+          <h2 class="text-xl font-extrabold text-white">Bricolage Grotesque Unified Typography System</h2>
+          <p class="text-xs text-slate-300 mt-1">Sistem tipografi keluarga tunggal (Single Font Family) dengan variasi bobot 400 hingga 800 yang dipadukan dengan angka tabular untuk aplikasi keuangan.</p>
+        </div>
+
+        <!-- Typography Showcase Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-4 bg-slate-900 border-2 border-black rounded-xl space-y-2">
+            <span class="text-[10px] text-neo-yellow font-bold uppercase">Display & Headings (800 ExtraBold)</span>
+            <div class="font-extrabold text-2xl text-white tracking-tight">KasSurs.</div>
+            <p class="text-xs text-slate-400">Digunakan untuk Logo, Total Saldo, dan Judul Layar Utama.</p>
+          </div>
+
+          <div class="p-4 bg-slate-900 border-2 border-black rounded-xl space-y-2">
+            <span class="text-[10px] text-neo-green font-bold uppercase">Action & Labels (700 Bold)</span>
+            <div class="font-bold text-base text-white">Speed-Tap Roster 30 Anggota</div>
+            <p class="text-xs text-slate-400">Digunakan untuk nama anggota pada roster, tombol CTA, dan label form.</p>
+          </div>
+
+          <div class="p-4 bg-slate-900 border-2 border-black rounded-xl space-y-2">
+            <span class="text-[10px] text-neo-sky font-bold uppercase">Financial Figures (Tabular Nums)</span>
+            <div class="font-extrabold text-xl text-white tabular-nums">Rp 4.250.000</div>
+            <p class="text-xs text-slate-400">Class <code class="text-neo-yellow">tabular-nums</code> memastikan perataan digit vertikal sempurna.</p>
+          </div>
+        </div>
+
+        <!-- Color Palette Grid -->
+        <div>
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-neo-yellow mb-3">Neo Color Tokens</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs text-black font-bold">
+            <div class="p-3.5 rounded-xl bg-neo-bg border-3 border-black shadow-neo-sm">
+              <div class="font-extrabold">Canvas Retro</div>
+              <div class="text-[10px] font-mono">#FFFDF0</div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-neo-green border-3 border-black shadow-neo-sm">
+              <div class="font-extrabold">Mint Lunas (Primary)</div>
+              <div class="text-[10px] font-mono">#86EFAC</div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-neo-coral border-3 border-black shadow-neo-sm">
+              <div class="font-extrabold">Coral Alert (Danger)</div>
+              <div class="text-[10px] font-mono">#FCA5A5</div>
+            </div>
+            <div class="p-3.5 rounded-xl bg-neo-yellow border-3 border-black shadow-neo-sm">
+              <div class="font-extrabold">Punchy Yellow</div>
+              <div class="text-[10px] font-mono">#FEF08A</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- JAVASCRIPT STATE ENGINE -->
+  <script>
+    // 30 Organization Members
+    const membersData = [
+      { id: 1, name: "Ahmad Fauzi", paid: false, date: null },
+      { id: 2, name: "Siti Aminah", paid: true, date: "01 Sep" },
+      { id: 3, name: "Budi Santoso", paid: true, date: "28 Ags" },
+      { id: 4, name: "Citra Dewi", paid: false, date: null },
+      { id: 5, name: "Dimas Pratama", paid: true, date: "30 Ags" },
+      { id: 6, name: "Eko Saputra", paid: true, date: "01 Sep" },
+      { id: 7, name: "Fitri Handayani", paid: false, date: null },
+      { id: 8, name: "Gilang Ramadhan", paid: true, date: "29 Ags" },
+      { id: 9, name: "Hani Wijaya", paid: true, date: "01 Sep" },
+      { id: 10, name: "Indra Kusuma", paid: false, date: null },
+      { id: 11, name: "Joko Widodo", paid: true, date: "27 Ags" },
+      { id: 12, name: "Kartika Sari", paid: true, date: "01 Sep" },
+      { id: 13, name: "Lukman Hakim", paid: true, date: "31 Ags" },
+      { id: 14, name: "Maya Agustina", paid: false, date: null },
+      { id: 15, name: "Naufal Hadi", paid: true, date: "01 Sep" },
+      { id: 16, name: "Olivia Zahrani", paid: true, date: "28 Ags" },
+      { id: 17, name: "Panji Gumilang", paid: false, date: null },
+      { id: 18, name: "Qoriatul Aini", paid: true, date: "01 Sep" },
+      { id: 19, name: "Rian Hidayat", paid: true, date: "30 Ags" },
+      { id: 20, name: "Siska Amelia", paid: true, date: "01 Sep" },
+      { id: 21, name: "Taufik Hidayat", paid: false, date: null },
+      { id: 22, name: "Utami Ningsih", paid: true, date: "29 Ags" },
+      { id: 23, name: "Vina Panduwinata", paid: true, date: "01 Sep" },
+      { id: 24, name: "Wahyu Setiawan", paid: true, date: "28 Ags" },
+      { id: 25, name: "Xaverius Bayu", paid: true, date: "01 Sep" },
+      { id: 26, name: "Yuliana Safitri", paid: true, date: "30 Ags" },
+      { id: 27, name: "Zainal Abidin", paid: true, date: "01 Sep" },
+      { id: 28, name: "Agus Pratama", paid: true, date: "29 Ags" },
+      { id: 29, name: "Bella Safira", paid: true, date: "01 Sep" },
+      { id: 30, name: "Candra Wijaya", paid: true, date: "28 Ags" }
+    ];
+
+    let currentFilter = 'all';
+    let expenseTotal = 150000;
+
+    // Render Neo Speed-Tap Grid
+    function renderMembers() {
+      const grid = document.getElementById('member-roster-grid');
+      grid.innerHTML = '';
+
+      let list = [...membersData];
+      if (currentFilter === 'unpaid') {
+        list = list.filter(m => !m.paid);
+      } else {
+        // Unpaid always on top in speed roster
+        list.sort((a, b) => (a.paid === b.paid) ? 0 : a.paid ? 1 : -1);
+      }
+
+      list.forEach(member => {
+        const card = document.createElement('div');
+        card.className = `neo-member-card p-2.5 cursor-pointer flex flex-col justify-between h-[72px] active:translate-x-[2.5px] active:translate-y-[2.5px] active:shadow-none ${
+          member.paid
+            ? 'bg-neo-green text-black shadow-neo-sm'
+            : 'bg-white text-black shadow-neo hover:bg-neo-yellow'
+        }`;
+        
+        card.onclick = () => toggleMemberPayment(member.id);
+
+        card.innerHTML = `
+          <div class="flex justify-between items-start">
+            <span class="text-xs font-bold truncate">${member.name}</span>
+            <span class="p-0.5 border border-black rounded ${member.paid ? 'bg-white text-black' : 'bg-neo-coral text-black'}">
+              <i data-lucide="${member.paid ? 'check' : 'clock'}" class="w-3 h-3 stroke-[3]"></i>
+            </span>
+          </div>
+          <div class="flex justify-between items-center text-[10px] font-extrabold">
+            <span class="${member.paid ? 'text-black' : 'text-slate-600'} tabular-nums">Rp 30k</span>
+            <span class="px-1.5 py-0.5 border-1.5 border-black rounded text-[8px] uppercase ${
+              member.paid ? 'bg-white text-black' : 'bg-neo-coral text-black'
+            }">
+              ${member.paid ? `LUNAS (${member.date})` : 'TAP LUNAS'}
+            </span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      lucide.createIcons();
+      updateLedgerMetrics();
+    }
+
+    // Toggle Payment Status
+    function toggleMemberPayment(id) {
+      const member = membersData.find(m => m.id === id);
+      if (!member) return;
+
+      member.paid = !member.paid;
+      member.date = member.paid ? "01 Sep" : null;
+
+      if (navigator.vibrate) {
+        navigator.vibrate(45);
+      }
+
+      showToast(member.paid ? `✓ ${member.name} Lunas (Rp 30.000)` : `Status ${member.name} diubah Belum Bayar`);
+      renderMembers();
+    }
+
+    function filterMembers(type) {
+      currentFilter = type;
+      document.getElementById('tab-all').className = type === 'all' 
+        ? 'neo-btn text-[10px] px-2.5 py-1 bg-black text-white' 
+        : 'neo-btn text-[10px] px-2.5 py-1 bg-white text-black';
+      
+      document.getElementById('tab-unpaid').className = type === 'unpaid' 
+        ? 'neo-btn text-[10px] px-2.5 py-1 bg-black text-white' 
+        : 'neo-btn text-[10px] px-2.5 py-1 bg-neo-coral text-black';
+
+      renderMembers();
+    }
+
+    function updateLedgerMetrics() {
+      const paidCount = membersData.filter(m => m.paid).length;
+      const unpaidCount = membersData.length - paidCount;
+      const kasMasuk = paidCount * 30000;
+      const totalSaldo = 3560000 + kasMasuk - expenseTotal;
+      const percent = Math.round((paidCount / membersData.length) * 100);
+
+      const fmt = (n) => "Rp " + n.toLocaleString('id-ID');
+
+      // Update Card
+      document.getElementById('card-total-saldo').innerText = fmt(totalSaldo);
+      document.getElementById('card-kas-masuk').innerText = "+ " + fmt(kasMasuk);
+      document.getElementById('card-progress-text').innerText = `${paidCount} / 30 Orang (${percent}%)`;
+      document.getElementById('card-progress-bar').style.width = `${percent}%`;
+      document.getElementById('btn-unpaid-count').innerText = unpaidCount;
+
+      // Update Live State Inspector
+      document.getElementById('live-total-saldo').innerText = fmt(totalSaldo);
+      document.getElementById('live-kas-masuk').innerText = "+ " + fmt(kasMasuk);
+      document.getElementById('live-lunas-count').innerText = `${paidCount} / 30 (${percent}%)`;
+      document.getElementById('live-unpaid-count').innerText = `${unpaidCount} Orang`;
+    }
+
+    // Switch Mockup Screens
+    function switchScreen(screenName) {
+      document.querySelectorAll('.screen-item').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.screen-item').forEach(el => el.classList.remove('flex'));
+
+      const target = document.getElementById(`subscreen-${screenName}`);
+      if (target) {
+        target.classList.remove('hidden');
+        target.classList.add('flex');
+      }
+
+      // Update Left Switcher Button Styles
+      const buttons = ['login', 'dashboard', 'expense', 'member', 'report'];
+      const bgMap = {
+        login: 'bg-neo-purple',
+        dashboard: 'bg-neo-green',
+        expense: 'bg-neo-coral',
+        member: 'bg-neo-sky',
+        report: 'bg-neo-orange'
+      };
+
+      buttons.forEach(b => {
+        const btn = document.getElementById(`nav-btn-${b}`);
+        if (btn) {
+          if (b === screenName) {
+            btn.className = `w-full text-left p-2.5 rounded-xl border-2 border-black ${bgMap[b]} text-black text-xs font-extrabold flex items-center justify-between transition shadow-neo`;
+          } else {
+            btn.className = "w-full text-left p-2.5 rounded-xl border-2 border-black bg-slate-100 hover:bg-white text-black text-xs font-extrabold flex items-center justify-between transition shadow-neo-sm";
+          }
+        }
+      });
+      lucide.createIcons();
+    }
+
+    // View Mode Switcher
+    function setViewMode(mode) {
+      document.getElementById('view-interactive').classList.add('hidden');
+      document.getElementById('view-gallery').classList.add('hidden');
+      document.getElementById('view-tokens').classList.add('hidden');
+
+      document.getElementById('btn-interactive').className = "px-4 py-2 rounded-xl border-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 transition";
+      document.getElementById('btn-gallery').className = "px-4 py-2 rounded-xl border-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 transition";
+      document.getElementById('btn-tokens').className = "px-4 py-2 rounded-xl border-2 border-transparent text-slate-400 hover:text-white flex items-center gap-2 transition";
+
+      document.getElementById(`view-${mode}`).classList.remove('hidden');
+      document.getElementById(`btn-${mode}`).className = "px-4 py-2 rounded-xl border-2 border-black bg-neo-yellow text-black shadow-neo-sm flex items-center gap-2 transition font-extrabold";
+      lucide.createIcons();
+    }
+
+    // In-App Toast
+    function showToast(msg) {
+      const toast = document.getElementById('inapp-toast');
+      document.getElementById('toast-message').innerText = msg;
+      toast.classList.remove('-translate-y-28', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.add('-translate-y-28', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 2200);
+    }
+
+    function selectCategory(btn, catName) {
+      document.querySelectorAll('.cat-pill').forEach(el => {
+        el.className = "cat-pill neo-btn px-3 py-1 bg-white text-black font-bold flex-shrink-0";
+      });
+      btn.className = "cat-pill neo-btn px-3 py-1 bg-black text-white font-extrabold flex-shrink-0";
+    }
+
+    function submitExpenseForm() {
+      const amountStr = document.getElementById('input-expense-amount').value;
+      const amount = parseInt(amountStr.replace(/\D/g, '')) || 0;
+
+      if (amount <= 0) {
+        showToast("Nominal pengeluaran harus > 0");
+        return;
+      }
+
+      expenseTotal += amount;
+      updateLedgerMetrics();
+      showToast(`Pengeluaran Rp ${amount.toLocaleString('id-ID')} dicatat!`);
+      setTimeout(() => switchScreen('dashboard'), 900);
+    }
+
+    function simulateDownload(type) {
+      showToast(`Mengunduh File ${type} (September 2026)...`);
+    }
+
+    function resetLedgerData() {
+      membersData.forEach((m, idx) => {
+        m.paid = idx < 23;
+      });
+      expenseTotal = 150000;
+      renderMembers();
+      showToast("Data simulasi di-reset ke awal");
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      renderMembers();
+    });
+  </script>
+</body>
+</html>

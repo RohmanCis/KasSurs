@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Neo-Brutalism V2.2 (3-DESIGN.md) — token OKLCH V1.0 dihapus saat
+   FASE-3 Langkah 4 cleanup; token neo.* hidup di tailwind.config.ts.
+   Body base styling kini di layout.tsx (bg-neo-bg text-black). */
+
+@layer utilities {
+  /* Nominal Rupiah: angka rata kolom (AGENTS.md code style) */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Shake halus untuk error field/banner (3-DESIGN Bagian 6: 150ms,
+     ease-in-out). prefers-reduced-motion: rule global di bawah
+     mematikannya otomatis (animation-duration 0.01ms). */
+  .animate-shake {
+    animation: shake 150ms ease-in-out;
+  }
+}
+
+@keyframes shake {
+  25% {
+    transform: translateX(-3px);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+  75% {
+    transform: translateX(-2px);
+  }
+}
+
+/* Vaul 1.x hardcode durasi 0.5s via CSS ter-inject + inline style — tanpa
+   prop konfigurasi. Spec Bagian 6: drawer 200ms ease-out. !important wajib
+   untuk menang atas inline style vaul. */
+[data-vaul-drawer] {
+  transition-duration: 200ms !important;
+  animation-duration: 200ms !important;
+}
+[data-vaul-overlay] {
+  transition-duration: 200ms !important;
+  animation-duration: 200ms !important;
+}
+
+/* Aksesibilitas — 3-DESIGN.md Bagian 6: hormati prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

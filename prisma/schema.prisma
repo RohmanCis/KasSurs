@@ -1,0 +1,124 @@
+// KasSurs — Prisma schema, transkripsi eksak dari .agents/2-TECH-SPEC.md Bagian 2
+// Field Prisma/API camelCase; kolom DB snake_case via @map per-field + @@map per tabel.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  directUrl = env("DIRECT_URL")
+  url       = env("DATABASE_URL")
+}
+
+model Member {
+  id           String    @id @default(cuid())
+  nama         String
+  noHp         String    @unique @map("no_hp")
+  pinHash      String    @map("pin_hash")
+  role         Role      @default(ANGGOTA)
+  statusAktif  Boolean   @default(true) @map("status_aktif")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  payments     Payment[]
+  auditLogs    AuditLog[]     @relation("ActorLogs")
+  loginAttempts LoginAttempt[]
+  reportSnapshots ReportSnapshot[] @relation("ReportSnapshots")
+
+  @@map("members")
+}
+
+enum Role {
+  ADMIN
+  ANGGOTA
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  memberId      String   @map("member_id")
+  member        Member   @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  bulan         Int      // 1-12
+  tahun         Int
+  jumlah        Int      @default(30000) // editable — boleh beda dari default (rapel, sumbangan lebih), validasi jumlah > 0 dilakukan di application layer (Zod), bukan DB constraint
+  tanggalBayar  DateTime @map("tanggal_bayar")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@unique([memberId, bulan, tahun]) // cegah duplikat pembayaran per bulan
+  @@index([bulan, tahun])
+  @@map("payments")
+}
+
+model Category {
+  id        String    @id @default(cuid())
+  nama      String    @unique
+  isDefault Boolean   @default(false) @map("is_default")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  expenses  Expense[]
+
+  @@map("categories")
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  categoryId  String   @map("category_id")
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  deskripsi   String
+  jumlah      Int
+  tanggal     DateTime
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([tanggal])
+  @@map("expenses")
+}
+
+model AuditLog {
+  id         String    @id @default(cuid())
+  actorId    String    @map("actor_id")
+  actor      Member    @relation("ActorLogs", fields: [actorId], references: [id], onDelete: Restrict)
+  aksi       AuditAction
+  entityType String    @map("entity_type") // "Payment" | "Expense" | "Member" | "Category"
+  entityId   String    @map("entity_id")
+  dataLama   Json?     @map("data_lama")
+  dataBaru   Json?     @map("data_baru")
+  timestamp  DateTime  @default(now())
+
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  memberId  String   @map("member_id")
+  member    Member   @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  waktu     DateTime @default(now())
+  berhasil  Boolean
+
+  @@index([memberId, waktu])
+  @@map("login_attempts")
+}
+
+// FR-23 — snapshot laporan beku: hasil kalkulasi laporan periode dibekukan
+// saat export pertama; re-export periode sama render dari payload ini.
+// Payload = ReportSnapshotPayload (src/lib/types.ts / Tech Spec Bagian 3).
+model ReportSnapshot {
+  id          String   @id @default(cuid())
+  bulan       Int
+  tahun       Int
+  payload     Json
+  createdById String   @map("created_by_id")
+  createdBy   Member   @relation("ReportSnapshots", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([bulan, tahun]) // 1 snapshot per periode — re-export wajib pakai snapshot ini
+  @@map("report_snapshots")
+}

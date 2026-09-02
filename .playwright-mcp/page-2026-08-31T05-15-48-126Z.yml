@@ -1,0 +1,18 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - heading "KasSurs" [level=1] [ref=e4]
+      - paragraph [ref=e5]: Masuk dengan nomor HP dan PIN kamu.
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - generic [ref=e8]: Nomor HP
+        - textbox "Nomor HP" [disabled] [ref=e9]:
+          - /placeholder: "Contoh: 081234567890"
+          - text: "081213024017"
+      - generic [ref=e10]:
+        - generic [ref=e11]: PIN
+        - textbox "PIN" [disabled] [ref=e12]:
+          - /placeholder: 6 digit PIN
+          - text: "000000"
+      - button "Memeriksa..." [disabled] [ref=e15]
+  - alert [ref=e14]
