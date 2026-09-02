@@ -71,7 +71,7 @@ Rujukan wajib sebelum implementasi apa pun — jangan asumsi di luar dokumen ini
 - Kontrak tipe TypeScript di Tech Spec Bagian 3 adalah wajib — didefinisikan sekali di `src/lib/types.ts`, dipakai bersama frontend & backend, tidak ditebak ulang per task.
 - Struktur folder mengikuti konvensi Next.js 14+ App Router sesuai Tech Spec Bagian 1.
 - UI Bahasa Indonesia, mobile-first (default 360-430px), font **Bricolage Grotesque** (`next/font/google`, subset 400/700/800), nominal Rupiah pakai `font-variant-numeric: tabular-nums`. Jangan pakai Inter atau Plus Jakarta Sans (diganti V2.2).
-- Styling **Neo-Brutalism V2.2**: semua border hitam pekat (`border-black`), hard shadow `shadow-neo*`, press-down `active:translate + active:shadow-none` wajib di semua tombol/kartu interaktif, status selalu disertai teks (bukan warna saja). Utility merge class via `cn()` (`src/lib/utils.ts` — clsx + tailwind-merge). Token lama V1.0 (OKLCH/canvas/surface/primary/dst.) SUDAH DIHAPUS — jangan pakai.
+- Styling **Neo-Brutalism V2.2**: semua border hitam pekat (`border-black`), hard shadow `shadow-neo*`, press-down via utility class `neo-press` / `neo-press-md` (2.5px) / `neo-press-sm` (2px) — plugin Tailwind di `tailwind.config.ts`, default 3.5px + `shadow-none` — WAJIB dipakai di semua tombol/kartu interaktif (jangan tulis ulang blob `active:translate-*` manual), status selalu disertai teks (bukan warna saja). Utility merge class via `cn()` (`src/lib/utils.ts` — clsx + tailwind-merge). Token lama V1.0 (OKLCH/canvas/surface/primary/dst.) SUDAH DIHAPUS — jangan pakai.
 
 ## Critical Business Rules
 
@@ -124,7 +124,7 @@ Status: T-01 s.d. T-37 + Modul R + design-review batch fix SEMUA DONE. Sisa T-38
 
 ## Progress
 
-Update terakhir: 2026-09-03 — Mobile perf QA + FASE 1-3 eksekusi + deepening #3/#4 + API Handler Kit #1 + audit dokumen. Detail state, keputusan & history: `.agents/HANDOFF.md`.
+Update terakhir: 2026-09-03 — Mobile perf QA + FASE 1-3 eksekusi + deepening #3/#4 + API Handler Kit #1 + audit dokumen + **code review menyeluruh 2-axis (Standards+Spec, diff db3e822→HEAD) + fix batch**. Detail state, keputusan & history: `.agents/HANDOFF.md`.
 
 - **Done:** T-01 s.d. T-37 + Modul R (UI V2.2) + design review fix + QA manual fix + **deepening #3/#4 (2026-09-03)**: `src/lib/format.ts` (satu sumber NAMA_BULAN/formatRupiah/todayISO WIB-safe — 11 file konsumen) + `src/lib/validation.ts` (dateOnly/minimalSatuField/parseBulanTahunQuery — 6 route handler); 23 unit test baru + **FASE 1/2/3 + error/not-found (2026-09-03)** + **API Handler Kit #1 (2026-09-03)**: `src/lib/api/{respond,session}.ts` + `src/lib/dto/{payment,expense,member,category}.ts` — 11/13 route migrasi, ±450 baris boilerplate dihapus, kontrak byte-identik. Verifikasi terakhir: tsc clean, vitest **161/161** (29 files). E2E 10/10 (4 spec, terakhir 2026-09-03). JetBrains Mono dihapus (badge login pakai `tabular-nums` + generic mono stack).
 - **Next:** T-38–T-39 Deployment (Vercel env vars + `prisma migrate deploy` + `prisma db seed`). Kandidat #2 useApiData NO-GO (ROI eval 2026-09-03 — lihat HANDOFF.md); kandidat arsitektur deepening #1–#4 semua selesai/ditutup. Plan lengkap: HANDOFF.md §4.
