@@ -29,7 +29,7 @@ Buka `http://localhost:3100/login`. Admin: `081213024017` / PIN `000000`.
 
 | # | Aksi | Harusnya | Hasil |
 |---|---|---|---|
-| 2.1 | Lihat SaldoCard | Saldo = total masuk − keluar, format Rp, angka rata (tabular) | |
+| 2.1 | Lihat kartu saldo (TreasuryHero) | Saldo = total masuk − keluar, format Rp, angka rata (tabular) | |
 | 2.2 | Kartu "Belum Bayar" | Angka = anggota aktif belum bayar bulan ini | |
 | 2.3 | Refresh halaman | Tetap login (cookie 30 hari sliding), data sama | |
 | 2.4 | Cari tombol logout | — | ❌ Temuan #2 |

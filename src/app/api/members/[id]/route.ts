@@ -19,13 +19,19 @@
 
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { hashPin, verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { hashPin } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
 import { minimalSatuField } from "@/lib/validation";
-import type { MemberDTO, MemberErrorResponse } from "@/lib/types";
+import { getSessionOr401 } from "@/lib/api/session";
+import { invalidInput } from "@/lib/api/respond";
+import {
+  memberNotFound,
+  memberSnapshot,
+  phoneAlreadyRegistered,
+  toMemberDTO,
+} from "@/lib/dto/member";
 
 // Validasi field sama T-16 (nama/noHp non-empty, pin 4-6 digit) — semua
 // opsional; minimalSatuField menjamin minimal satu field diisi (body {} → 400).
@@ -41,59 +47,16 @@ const updateMemberSchema = minimalSatuField(
   }),
 );
 
-function badRequest(message: string): NextResponse<MemberErrorResponse> {
-  return NextResponse.json({ error: "INVALID_INPUT", message }, { status: 400 });
-}
-
-function unauthorized(): NextResponse<MemberErrorResponse> {
-  // Fallback defensif — normalnya middleware (T-12) sudah menolak duluan.
-  // Error code disamakan dengan middleware (UNAUTHORIZED) agar konsisten.
-  return NextResponse.json(
-    { error: "UNAUTHORIZED", message: "Belum login atau sesi kedaluwarsa" },
-    { status: 401 },
-  );
-}
-
-function phoneConflict(noHp: string): NextResponse<MemberErrorResponse> {
-  return NextResponse.json(
-    { error: "PHONE_ALREADY_REGISTERED", message: `No HP ${noHp} sudah terdaftar` },
-    { status: 409 },
-  );
-}
-
-function notFound(): NextResponse<MemberErrorResponse> {
-  return NextResponse.json(
-    { error: "MEMBER_NOT_FOUND", message: "Anggota tidak ditemukan" },
-    { status: 404 },
-  );
-}
-
-// Snapshot aman untuk audit: TANPA pinHash (hash tidak boleh bocor ke audit
-// log) — hanya field identitas + status yang relevan (sama T-16).
-function memberSnapshot(m: {
-  id: string;
-  nama: string;
-  noHp: string;
-  role: string;
-  statusAktif: boolean;
-}): Record<string, unknown> {
-  return { id: m.id, nama: m.nama, noHp: m.noHp, role: m.role, statusAktif: m.statusAktif };
-}
-
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!token) return unauthorized();
-  const session = await verifySession(token);
-  if (!session) return unauthorized();
+  const session = await getSessionOr401();
+  if (session instanceof NextResponse) return session;
   const actorId = session.memberId;
 
   const { id } = params;
 
   const raw = await request.json().catch(() => null);
   const parsed = updateMemberSchema.safeParse(raw);
-  if (!parsed.success) {
-    return badRequest(parsed.error.issues[0]?.message ?? "Input tidak valid");
-  }
+  if (!parsed.success) return invalidInput(parsed);
   const body = parsed.data;
 
   try {
@@ -129,22 +92,16 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       return { kind: "ok" as const, member: updated };
     });
 
-    if (result.kind === "not_found") return notFound();
-    if (result.kind === "conflict") return phoneConflict(body.noHp!);
+    if (result.kind === "not_found") return memberNotFound();
+    if (result.kind === "conflict") return phoneAlreadyRegistered(body.noHp!);
 
-    const dto: MemberDTO = {
-      id: result.member.id,
-      nama: result.member.nama,
-      noHp: result.member.noHp,
-      statusAktif: result.member.statusAktif,
-      role: result.member.role,
-    };
+    const dto = toMemberDTO(result.member);
     return NextResponse.json(dto, { status: 200 });
   } catch (err) {
     // Race condition: dua request PATCH noHp sama dalam waktu bersamaan →
     // constraint unique DB melindungi; tangkap P2002 → 409 sama.
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-      return phoneConflict(body.noHp ?? "");
+      return phoneAlreadyRegistered(body.noHp ?? "");
     }
     throw err;
   }

@@ -27,71 +27,23 @@
 // =====================================================================
 
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
-import type { MemberDTO, MemberDeactivateErrorResponse } from "@/lib/types";
-
-function unauthorized(): NextResponse<MemberDeactivateErrorResponse> {
-  // Fallback defensif — normalnya middleware (T-12) sudah menolak duluan.
-  // Error code disamakan dengan middleware (UNAUTHORIZED) agar konsisten.
-  return NextResponse.json(
-    { error: "UNAUTHORIZED", message: "Belum login atau sesi kedaluwarsa" },
-    { status: 401 },
-  );
-}
-
-function notFound(): NextResponse<MemberDeactivateErrorResponse> {
-  return NextResponse.json(
-    { error: "MEMBER_NOT_FOUND", message: "Anggota tidak ditemukan" },
-    { status: 404 },
-  );
-}
-
-function lastAdminBlocked(): NextResponse<MemberDeactivateErrorResponse> {
-  return NextResponse.json(
-    {
-      error: "LAST_ADMIN",
-      message:
-        "Tidak bisa menonaktifkan admin ini: dia satu-satunya admin aktif. Sistem butuh minimal satu admin aktif agar tidak terkunci permanen.",
-    },
-    { status: 403 },
-  );
-}
-
-// Snapshot aman untuk audit: TANPA pinHash (hash tidak boleh bocor ke audit
-// log) — pola sama T-16 (memberSnapshot di members/route.ts).
-function memberSnapshot(m: {
-  id: string;
-  nama: string;
-  noHp: string;
-  role: string;
-  statusAktif: boolean;
-}): Record<string, unknown> {
-  return { id: m.id, nama: m.nama, noHp: m.noHp, role: m.role, statusAktif: m.statusAktif };
-}
+import { getSessionOr401 } from "@/lib/api/session";
+import { lastAdminLock, memberNotFound, memberSnapshot, toMemberDTO } from "@/lib/dto/member";
 
 export async function PATCH(_request: Request, { params }: { params: { id: string } }) {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!token) return unauthorized();
-  const session = await verifySession(token);
-  if (!session) return unauthorized();
+  const session = await getSessionOr401();
+  if (session instanceof NextResponse) return session;
   const actorId = session.memberId;
 
   const target = await prisma.member.findUnique({ where: { id: params.id } });
-  if (!target) return notFound();
+  if (!target) return memberNotFound();
 
   // Idempoten: sudah nonaktif → 200 tanpa perubahan & tanpa audit (lihat
   // header — tidak ada state berubah, tidak ada yang perlu dicatat).
   if (!target.statusAktif) {
-    const dto: MemberDTO = {
-      id: target.id,
-      nama: target.nama,
-      noHp: target.noHp,
-      statusAktif: false,
-      role: target.role,
-    };
+    const dto = toMemberDTO(target);
     return NextResponse.json(dto);
   }
 
@@ -122,14 +74,8 @@ export async function PATCH(_request: Request, { params }: { params: { id: strin
     return { blocked: false as const, member: updated };
   });
 
-  if (result.blocked) return lastAdminBlocked();
+  if (result.blocked) return lastAdminLock();
 
-  const dto: MemberDTO = {
-    id: result.member.id,
-    nama: result.member.nama,
-    noHp: result.member.noHp,
-    statusAktif: result.member.statusAktif,
-    role: result.member.role,
-  };
+  const dto = toMemberDTO(result.member);
   return NextResponse.json(dto);
 }

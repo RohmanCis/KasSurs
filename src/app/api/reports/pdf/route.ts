@@ -13,29 +13,14 @@
 // =====================================================================
 
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { getOrCreateSnapshot, reportQuerySchema } from "@/lib/report-snapshot";
 import { generateReportPdf } from "@/lib/export/pdf";
-import type { ReportErrorResponse } from "@/lib/types";
-
-function invalidInput(message: string): NextResponse<ReportErrorResponse> {
-  return NextResponse.json({ error: "INVALID_INPUT", message }, { status: 400 });
-}
-
-function unauthorized(): NextResponse<ReportErrorResponse> {
-  // Fallback defensif — normalnya middleware (T-12) sudah menolak duluan.
-  return NextResponse.json(
-    { error: "UNAUTHORIZED", message: "Belum login atau sesi kedaluwarsa" },
-    { status: 401 },
-  );
-}
+import { getSessionOr401 } from "@/lib/api/session";
+import { badRequest } from "@/lib/api/respond";
 
 export async function GET(request: Request) {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!token) return unauthorized();
-  const session = await verifySession(token);
-  if (!session) return unauthorized();
+  const session = await getSessionOr401();
+  if (session instanceof NextResponse) return session;
   // RBAC ANGGOTA→403 sudah ditangani middleware (/api/reports ADMIN-only).
 
   const url = new URL(request.url);
@@ -46,7 +31,7 @@ export async function GET(request: Request) {
     regenerate: url.searchParams.get("regenerate") ?? undefined,
   });
   if (!parsed.success) {
-    return invalidInput(parsed.error.issues[0]?.message ?? "Query bulan/tahun tidak valid");
+    return badRequest(parsed.error.issues[0]?.message ?? "Query bulan/tahun tidak valid");
   }
 
   // Default periode: bulan berjalan (FR-17) — UTC, konsisten storage.

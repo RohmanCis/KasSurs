@@ -12,22 +12,12 @@
 // =====================================================================
 
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { getSessionOr401 } from "@/lib/api/session";
 import { getDashboardSummary } from "@/lib/dashboard";
 
-function unauthorized(): NextResponse<{ error: string; message: string }> {
-  return NextResponse.json(
-    { error: "UNAUTHORIZED", message: "Belum login atau sesi kedaluwarsa" },
-    { status: 401 },
-  );
-}
-
 export async function GET() {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!token) return unauthorized();
-  const session = await verifySession(token);
-  if (!session) return unauthorized();
+  const session = await getSessionOr401();
+  if (session instanceof NextResponse) return session;
 
   return NextResponse.json(await getDashboardSummary(session));
 }

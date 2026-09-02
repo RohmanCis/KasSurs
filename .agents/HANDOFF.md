@@ -2,7 +2,7 @@
 
 Handoff untuk agent/session berikutnya. Format: **Keputusan yang masih mengikat → History (ringkas, per tanggal) → Blocker/Issue terbuka**. Detail eksekusi harian ada di git history.
 
-**Status proyek:** T-01 s.d. T-37 + Modul R (UI Neo-Brutalism V2.2) + design-review batch fix + QA manual fix SELESAI. Sisa T-38–T-39 (Deployment). Verifikasi terakhir (2026-09-03, pasca FASE 1+2+3+QA oracle): tsc clean, vitest **161/161** (29 files), build OK, E2E 9/10 + test gagal pass 2× re-run (flake cold-compile gotcha #4), smoke live RSC OK (data ter-stream di HTML pertama /dashboard).
+**Status proyek:** T-01 s.d. T-37 + Modul R (UI Neo-Brutalism V2.2) + design-review batch fix + QA manual fix SELESAI. Sisa T-38–T-39 (Deployment). Verifikasi terakhir (2026-09-03, pasca FASE 1+2+3+QA oracle): tsc clean, vitest **161/161** (29 files), build OK, E2E 10/10 (4 spec; re-run 2026-09-03, 1 flake cold-compile pass saat re-run), smoke live RSC OK (data ter-stream di HTML pertama /dashboard).
 
 ---
 
@@ -81,7 +81,23 @@ Review arsitektur 4 kandidat (laporan HTML temp dir; vocabulary: module/interfac
 - **#3 Format & Date Module — `src/lib/format.ts`**: satu sumber `NAMA_BULAN`, `NAMA_BULAN_SINGKAT`, `todayISO()` (invariant WIB terkunci 1 tempat, bug historis oracle #2), `formatRupiah`, `formatRibuan`, `formatTanggal`, `formatTanggalSingkat`. Duplikat dihapus di 11 file konsumen (formatRupiah ×4, NAMA_BULAN ×8, todayISO ×2, formatRibuan ×3, dst). **Sengaja TIDAK digabung** (output beda, dikomentari): PassbookCard varian uppercase + "01 Sep 2026" + Intl currency; pdf.ts DD/MM/YYYY + Intl currency. Unit test `tests/unit/format.test.ts` (11 test) — termasuk guard WIB: test gagal otomatis jika todayISO regressed ke toISOString DAN dijalankan WIB 00:00-06:59.
 - **#4 Zod Validation Module — `src/lib/validation.ts`**: `dateOnly(fieldName)` (roundtrip guard gotcha #12 — factory karena pesan 400 literal kontrak per-nama-field), `minimalSatuField(schema)` (body {} → 400), `parseBulanTahunQuery(searchParams)` (berpasangan atau INVALID). Duplikat dihapus di 6 route handler: date-only refine ×4, minimal-satu-field ×3, query bulan/tahun ×3. Unit test `tests/unit/validation.test.ts` (12 test): "2026-02-30" ditolak, datetime ditolak, query satuan → INVALID.
 - **Insight proses:** roundtrip test `new Date("...T00:00:00").toISOString()` SALAH di WIB (parse lokal → mundur sehari via toISOString) — roundtrip gotcha #12 hanya valid untuk date-only (parse UTC). Dua kali tertangkap oleh test suite sendiri.
-- **Sisa kandidat arsitektur:** #1 API Handler Kit (respond/session/domain modules — 7 handler masih ~42% boilerplate: unauthorized ×7, snapshot ×7, P-code ×8) & #2 useApiData hook (menunggu FASE-3). Kontrak literal tidak boleh berubah saat #1 dieksekusi.
+- **Sisa kandidat arsitektur:** #2 useApiData hook (menunggu evaluasi ulang ROI — konsumen tinggal pembayaran/anggota/pengeluaran/laporan yang client-side).
+
+### Architecture Deepening #1 — API Handler Kit (2026-09-03) — DIEKSEKUSI
+Blueprint oracle + eksekusi fixer. Verifikasi: tsc clean, vitest **161/161** (29 files), build OK. Kontrak HTTP byte-identik (integration test hijau tanpa perubahan test).
+- **Modul baru:** `src/lib/api/respond.ts` (`unauthorized`/`sessionMemberGone`/`invalidInput(zodResult)`/`badRequest(message)` — literal message dipin compile-time), `src/lib/api/session.ts` (`getSessionOr401(): Promise<VerifiedSession | NextResponse>`, narrowing call site via `instanceof NextResponse`), `src/lib/dto/{payment,expense,member,category}.ts` (DTO mapper + snapshot + domain error builder per domain — locality: kontrak penuh per domain).
+- **Migrasi:** 11 dari 13 route (auth/login + auth/logout tidak dimigrasi; middleware tidak disentuh) + `status/page.tsx` RSC (serialisasi inline + komentar ponytail dihapus → `toPaymentDTO`). ±450 baris boilerplate lokal dihapus (helper unauthorized ×11, prolog cookie ×15, DTO/snapshot dup, dst).
+- **Desain mengikat:** P2002/P2003 catch TETAP di route (recovery beda per-route — payments re-query `existingPaymentId`); RBAC 403 tetap middleware; members GET tetap tanpa prolog; login 401 beda semantik tak dipaksa ke helper; `toMemberDTO` 5-field dasar, GET members spread `statusBayarBulanIni`; `alreadyPaid` spread pakai `!== undefined` (call site race kirim `?? ""` — truthiness akan hapus field).
+- **Deviasi kecil fixer (disetujui):** +helper `badRequest(message)` untuk 400 literal non-Zod (query periode); `invalidInput` tipe struktural `ZodFailedResult` tanpa import zod; branch string di `toPaymentDTO`/`toExpenseDTO` dihapus (tipe Prisma sudah Date-only).
+
+### Kandidat #2 useApiData hook — NO-GO (2026-09-03, oracle ROI eval — MENGUNCI, jangan re-evaluasi ringan)
+Verdict: **tidak dieksekusi, YAGNI**. 5 alasan kuantitatif:
+1. Hanya 2 dari 4 halaman fit pola fetch-list generik ≥80% — pembayaran EXCLUDED (2-endpoint paralel + 2 Map + optimistic Speed-Tap + 409 cross-month fetch = hook butuh config-object), laporan EXCLUDED (blob-download, bukan list-fetch). Instance fit: anggota (1) + pengeluaran (2) = 3 instance di 2 halaman.
+2. Net baris NEGATIF: eliminasi ~40 baris riil vs biaya ~75-90 baris (hook+tipe+test+3 page edit).
+3. Variasi antar-instance bukan duplikasi murni: anggota butuh refetch imperatif pasca-reaktivasi; pengeluaran 2 resource independen 2 set loading/error. Hook = escape hatch, bukan eliminasi.
+4. Tren arsitektur melawan: dashboard+status kini RSC; arah proyek server-fetch untuk read-heavy — hook client makin tidak relevan.
+5. SWR/React Query sudah DITOLAK (YAGNI §112) — hook custom = SWR-lite, alasan tolak sama berlaku.
+**Re-evaluasi hanya jika:** (a) ≥1 halaman stateful baru gagal konversi RSC + butuh fetch-list client berulang, ATAU (b) duplikasi naik ≥3 halaman unik. Duplikasi fetch boilerplate di 4 halaman = trade-off sadar diterima.
 
 **Plan FASE 1 — Quick Wins (~1 jam, zero risk):**
 - S2: expose `jumlahAnggotaAktif` + `jumlahLunas` di `DashboardSummaryResponse` (`types.ts` + `api/dashboard/summary/route.ts` — data sudah di-query, 0 query baru); hapus fetch `/api/members` di `dashboard/page.tsx:50-66`. −1 RTT tiap buka dashboard.
@@ -120,22 +136,20 @@ Review arsitektur 4 kandidat (laporan HTML temp dir; vocabulary: module/interfac
   - Oracle review #1 (PRD) & #2 (pasca-E2E): semua MUST-FIX clear.
   - **Design review pasca-Modul R (agent designer):** 0 CRITICAL; 2 MAYOR + 4 MINOR + 7 NIT ditemukan → SEMUA fixed batch sama hari (detail di bagian UI). E2E re-run user: 10/10. popIn badge BARU sengaja di-skip (opsional by spec §6).
   - **QA manual user:** 2 bug visual (focus ring persegi kartu /anggota, ikon search /pembayaran meleset) → fixed, tsc clean (detail di bagian UI).
-- **2026-09-03:** Git init + push GitHub (RohmanCis/KasSurs, commit `db3e822`, 131 file). Mobile performance QA 3-lane (explorer+oracle+designer): 0 kritis, plan FASE 1-3 disusun & dicatat di bagian Keputusan — eksekusi ditunda menunggu user. JetBrains Mono dihapus dari project. Architecture review 4 kandidat deepening (laporan HTML temp dir) → **kandidat #3 (format.ts) + #4 (validation.ts) dieksekusi hari sama**: 17 file refactor, +2 modul lib, +23 unit test (2 file baru), vitest 138→**161/161**, tsc clean, kontrak literal utuh (integration test hijau). Detail di bagian Keputusan "Architecture Deepening".
+- **2026-09-03:** Git init + push GitHub (RohmanCis/KasSurs, commit `db3e822`, 131 file). Mobile performance QA 3-lane (explorer+oracle+designer): 0 kritis, plan FASE 1-3 disusun & dicatat di bagian Keputusan — eksekusi ditunda menunggu user. JetBrains Mono dihapus dari project. Architecture review 4 kandidat deepening (laporan HTML temp dir) → **kandidat #3 (format.ts) + #4 (validation.ts) dieksekusi hari sama**: 17 file refactor, +2 modul lib, +23 unit test (2 file baru), vitest 138→**161/161**, tsc clean, kontrak literal utuh (integration test hijau). Detail di bagian Keputusan "Architecture Deepening". **API Handler Kit #1 dieksekusi hari sama** (blueprint oracle + fixer; 11/13 route migrasi, ±450 baris boilerplate dihapus, kontrak byte-identik; tsc clean, vitest 161/161, build OK). **Audit dokumen 3-lane** (AGENTS/HANDOFF/PRD/TECH-SPEC/DESIGN/TASKS/QA-MANUAL/REPORT-CLIENT vs kode): 0 pelanggaran spec oleh kode, 0 dead-ref berbahaya; semua temuan stale-doc difix batch (28 edit + LOW 5 edit). **Kandidat #2 useApiData NO-GO** (ROI eval oracle — lihat bagian Keputusan).
 
 ---
 
 ## 3. Blocker / Issue terbuka
 
 - **T-38–T-39:** Vercel env vars (DATABASE_URL pooler 6543, DIRECT_URL pooler session-mode 5432 — pola gotcha #2, JWT_SECRET, SEED_ADMIN_*) → `prisma migrate deploy` + `prisma db seed` production.
-- Known-untested (laten, low risk): upsert `reportSnapshots` race path; P2003 field_name inspection; `verifySession` JWT-only tanpa cek statusAktif DB (trade-off V1 accepted).
 - Sisa data E2E di test DB (anggota "E2E...", payment, snapshot) — by design, terisolasi, vitest tetap hijau dengannya.
+- Issue laten (race upsert `reportSnapshots`, P2003 inspection, `verifySession` tanpa cek `statusAktif`) — DITUTUP keputusan user 2026-09-03: tidak di-test/diperbaiki, diterima sebagai trade-off V1.
 
 ## 4. Next session — sisa pekerjaan (urutan)
 
-Urutan proposal yang disarankan (plan detail ada di bagian Keputusan di atas; FASE 1, FASE 2, error.tsx, FASE 3 SUDAH selesai + oracle-verified 2026-09-03 — lihat bagian masing-masing):
-1. **Kandidat arsitektur #1** API Handler Kit (respond/session/domain; kontrak literal terkunci) — sekaligus unify `toPaymentDTO` inline status page (ponytail comment) ke lib.
-2. **Kandidat #2** useApiData hook — prasyarat FASE-3 sudah terpenuhi; evaluasi ulang ROI (dashboard/status kini RSC, konsumen tinggal pembayaran/anggota/pengeluaran/laporan).
-3. **T-38–T-39 Deployment** (Vercel env vars + `prisma migrate deploy` + `prisma db seed`). Catatan T-38: set `TZ=Asia/Jakarta` di Vercel (mitigasi `todayISO()` UTC di route non-RSC).
+Sisa satu item (FASE 1, 2, error.tsx, FASE 3, deepening #3/#4, API Handler Kit #1 SELESAI; kandidat #2 NO-GO — detail di bagian Keputusan):
+1. **T-38–T-39 Deployment** (Vercel env vars + `prisma migrate deploy` + `prisma db seed`). Catatan T-38: `TZ=Asia/Jakarta` di Vercel opsional — `todayISO()` sudah WIB-safe (deepening #3); TZ hanya menjaga default `Date` lokal server bila ada kode baru yang lupa pakai `format.ts`.
 
 ---
 

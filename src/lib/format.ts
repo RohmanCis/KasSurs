@@ -15,13 +15,12 @@ export const NAMA_BULAN_SINGKAT = [
   "JUL", "AGU", "SEP", "OKT", "NOV", "DES",
 ] as const;
 
-// Hari ini date-only LOKAL (bukan toISOString: UTC bisa bergeser sehari
+// Hari ini date-only WIB (bukan toISOString: UTC bisa bergeser sehari
 // di WIB 00:00-06:59 — bug historis oracle #2). Kontrak tetap YYYY-MM-DD.
+// WIB-safe di client & server (delegasi wibDateParts — Vercel TZ=UTC aman).
 export function todayISO(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate()
-  ).padStart(2, "0")}`;
+  const { tahun, bulan, tanggal } = wibDateParts();
+  return `${tahun}-${String(bulan).padStart(2, "0")}-${String(tanggal).padStart(2, "0")}`;
 }
 
 // 30000 → "Rp 30.000" (locale id-ID). Varian Intl currency (NBSP, dipakai
@@ -36,8 +35,11 @@ export function formatRibuan(digits: string): string {
 }
 
 // "2026-09-01" → "1 Sep" (list ringkas; tahun ada di header periode).
+// ponytail: parse `T00:00:00` lokal — benar di browser (client-only saat ini);
+// kalau dipakai di server (TZ=UTC) tetap aman karena offset 0, tapi jadikan
+// eksplisit kalau muncul kebutuhan server-side.
 export function formatTanggal(iso: string): string {
-  const d = new Date(`${iso}T00:00:00`); // parse sebagai lokal, bukan UTC
+  const d = new Date(`${iso}T00:00:00`);
   return new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short" }).format(d);
 }
 
@@ -49,7 +51,7 @@ export function formatTanggalSingkat(iso: string): string {
 }
 
 // WIB (UTC+7) — server-safe (Vercel TZ=UTC; local methods return UTC).
-// Dipakai RSC dashboard/status utk display bulan/tahun.
+// Dipakai RSC dashboard/status utk display bulan/tahun + todayISO().
 export function wibDateParts(): { tahun: number; bulan: number; tanggal: number } {
   const wib = new Date(Date.now() + 7 * 60 * 60 * 1000);
   return { tahun: wib.getUTCFullYear(), bulan: wib.getUTCMonth() + 1, tanggal: wib.getUTCDate() };

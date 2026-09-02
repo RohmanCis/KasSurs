@@ -16,6 +16,7 @@ import { redirect } from "next/navigation";
 import PassbookCard from "@/components/member/PassbookCard";
 import LogoutButton from "@/components/ui/LogoutButton";
 import { prisma } from "@/lib/prisma";
+import { toPaymentDTO } from "@/lib/dto/payment";
 import { getDashboardSummary } from "@/lib/dashboard";
 import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { wibDateParts, formatRupiah } from "@/lib/format";
@@ -46,19 +47,9 @@ export default async function StatusPage() {
     }),
   ]);
 
-  // Serialisasi PaymentDTO inline — mapping persis toPaymentDTO
-  // (src/app/api/payments/route.ts). memberNama denormalized (bukan field
-  // asli tabel). // ponytail: unify toPaymentDTO ke lib saat API Handler Kit #1.
-  const payments: PaymentDTO[] = paymentsRaw.map((p) => ({
-    id: p.id,
-    memberId: p.memberId,
-    memberNama: p.member.nama, // denormalized — bukan field asli tabel
-    bulan: p.bulan,
-    tahun: p.tahun,
-    jumlah: p.jumlah,
-    tanggalBayar: p.tanggalBayar.toISOString().slice(0, 10),
-    createdAt: p.createdAt.toISOString(),
-  }));
+  // Serialisasi PaymentDTO via lib/dto/payment (Handler Kit #1) — mapping
+  // identik route API. memberNama denormalized (bukan field asli tabel).
+  const payments: PaymentDTO[] = paymentsRaw.map((p) => toPaymentDTO(p));
 
   // Nama + status dari DB (member) — fallback "Anggota" utk member record
   // hilang (edge: session valid, member dihapus fisik — tidak terjadi via UI).

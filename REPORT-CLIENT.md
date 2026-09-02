@@ -150,7 +150,7 @@ Catatan: Tailwind config **tanpa plugin tambahan** (`plugins: []`) — semua efe
 
 ## 5. Desain Antarmuka — Neo-Brutalism V2.2
 
-Identitas visual yang **berbeda dari aplikasi kas pada umumnya**: warna flat berani, border hitam pekat, hard shadow, tipografi Bricolage Grotesque + JetBrains Mono untuk angka.
+Identitas visual yang **berbeda dari aplikasi kas pada umumnya**: warna flat berani, border hitam pekat, hard shadow, tipografi Bricolage Grotesque dengan angka rata kolom (tabular-nums).
 
 - **Mobile-first** — dioptimalkan untuk layar HP 360–430px (cara aktual pengguna memakai aplikasi)
 - **Feedback fisik** — semua tombol/kartu punya efek "press-down" (turun + shadow hilang saat ditekan)
@@ -194,7 +194,7 @@ Proses redesign melewati **2 putaran review arsitektur independen + 1 design rev
 | Role | Font | Penggunaan |
 |---|---|---|
 | Display/body | **Bricolage Grotesque** (`next/font/google`) | Semua teks — berkarakter, modern |
-| Mono | **JetBrains Mono** | Angka nominal Rupiah (tabular-nums), meta teknis, badge |
+| Mono | Generic monospace stack (`ui-monospace`, `Menlo`, dst.) | Meta teknis sesaat — badge teknis login saja; nominal Rupiah tetap Bricolage + `tabular-nums` |
 
 Skala ukuran: sm 14 / base 16 / lg 20 / 2xl 28 px.
 

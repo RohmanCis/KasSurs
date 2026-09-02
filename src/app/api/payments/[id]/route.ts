@@ -27,18 +27,14 @@
 
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
 import { dateOnly, minimalSatuField } from "@/lib/validation";
-import type {
-  DeletePaymentResponse,
-  PaymentConflictResponse,
-  PaymentDTO,
-  PaymentItemErrorResponse,
-} from "@/lib/types";
+import { getSessionOr401 } from "@/lib/api/session";
+import { invalidInput, sessionMemberGone } from "@/lib/api/respond";
+import { alreadyPaid, paymentNotFound, paymentSnapshot, toPaymentDTO } from "@/lib/dto/payment";
+import type { DeletePaymentResponse } from "@/lib/types";
 
 // Validasi sama T-20 (jumlah > 0 di application layer, bulan 1-12, tahun 4
 // digit, tanggalBayar date-only) — semua opsional; minimalSatuField menjamin
@@ -54,95 +50,16 @@ const updatePaymentSchema = minimalSatuField(
   }),
 );
 
-function badRequest(message: string): NextResponse<PaymentItemErrorResponse> {
-  return NextResponse.json({ error: "INVALID_INPUT", message }, { status: 400 });
-}
-
-function unauthorized(): NextResponse<PaymentItemErrorResponse> {
-  // Fallback defensif — normalnya middleware (T-12) sudah menolak duluan.
-  return NextResponse.json(
-    { error: "UNAUTHORIZED", message: "Belum login atau sesi kedaluwarsa" },
-    { status: 401 },
-  );
-}
-
-function notFound(): NextResponse<PaymentItemErrorResponse> {
-  return NextResponse.json(
-    { error: "PAYMENT_NOT_FOUND", message: "Pembayaran tidak ditemukan" },
-    { status: 404 },
-  );
-}
-
-// Body EXACT PaymentConflictResponse (kontrak wajib — pesan literal, sama
-// POST T-20): jangan ubah message.
-function alreadyPaid(existingPaymentId: string): NextResponse<PaymentConflictResponse> {
-  return NextResponse.json(
-    { error: "ALREADY_PAID", message: "Sudah lunas bulan ini", existingPaymentId },
-    { status: 409 },
-  );
-}
-
-// Snapshot aman untuk audit log (FR-21) — tanggal sebagai ISO string.
-// Duplikat lokal dari T-20 (paymentSnapshot) agar file ini mandiri; pola
-// sama, perubahan konsisten di kedua tempat.
-function paymentSnapshot(p: {
-  id: string;
-  memberId: string;
-  bulan: number;
-  tahun: number;
-  jumlah: number;
-  tanggalBayar: Date;
-  createdAt: Date;
-}): Record<string, unknown> {
-  return {
-    id: p.id,
-    memberId: p.memberId,
-    bulan: p.bulan,
-    tahun: p.tahun,
-    jumlah: p.jumlah,
-    tanggalBayar: p.tanggalBayar.toISOString().slice(0, 10),
-    createdAt: p.createdAt.toISOString(),
-  };
-}
-
-// Serialisasi ke PaymentDTO (duplikat lokal T-20 — memberNama denormalized).
-function toPaymentDTO(p: {
-  id: string;
-  memberId: string;
-  memberNama: string;
-  bulan: number;
-  tahun: number;
-  jumlah: number;
-  tanggalBayar: Date | string;
-  createdAt: Date | string;
-}): PaymentDTO {
-  return {
-    id: p.id,
-    memberId: p.memberId,
-    memberNama: p.memberNama, // denormalized — bukan field asli tabel
-    bulan: p.bulan,
-    tahun: p.tahun,
-    jumlah: p.jumlah,
-    tanggalBayar:
-      typeof p.tanggalBayar === "string" ? p.tanggalBayar : p.tanggalBayar.toISOString().slice(0, 10),
-    createdAt: typeof p.createdAt === "string" ? p.createdAt : p.createdAt.toISOString(),
-  };
-}
-
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!token) return unauthorized();
-  const session = await verifySession(token);
-  if (!session) return unauthorized();
+  const session = await getSessionOr401();
+  if (session instanceof NextResponse) return session;
   const actorId = session.memberId;
 
   const { id } = params;
 
   const raw = await request.json().catch(() => null);
   const parsed = updatePaymentSchema.safeParse(raw);
-  if (!parsed.success) {
-    return badRequest(parsed.error.issues[0]?.message ?? "Input tidak valid");
-  }
+  if (!parsed.success) return invalidInput(parsed);
   const body = parsed.data;
 
   try {
@@ -198,19 +115,10 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       return { kind: "ok" as const, payment: updated };
     });
 
-    if (result.kind === "not_found") return notFound();
+    if (result.kind === "not_found") return paymentNotFound();
     if (result.kind === "conflict") return alreadyPaid(result.existingId);
 
-    const dto = toPaymentDTO({
-      id: result.payment.id,
-      memberId: result.payment.memberId,
-      memberNama: result.payment.member.nama, // denormalized
-      bulan: result.payment.bulan,
-      tahun: result.payment.tahun,
-      jumlah: result.payment.jumlah,
-      tanggalBayar: result.payment.tanggalBayar,
-      createdAt: result.payment.createdAt,
-    });
+    const dto = toPaymentDTO(result.payment);
     return NextResponse.json(dto, { status: 200 });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
@@ -218,7 +126,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       // sama → constraint unique DB melempar P2002 → re-query → 409 sama.
       if (err.code === "P2002") {
         const existing = await prisma.payment.findUnique({ where: { id } });
-        if (!existing) return notFound();
+        if (!existing) return paymentNotFound();
         const bulanBaru = body.bulan ?? existing.bulan;
         const tahunBaru = body.tahun ?? existing.tahun;
         const dup = await prisma.payment.findUnique({
@@ -234,10 +142,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       }
       // FK violation actorId audit log → member sesi hilang di DB → 401.
       if (err.code === "P2003") {
-        return NextResponse.json(
-          { error: "UNAUTHORIZED", message: "Sesi merujuk ke anggota yang tidak ada lagi" },
-          { status: 401 },
-        );
+        return sessionMemberGone();
       }
     }
     throw err;
@@ -245,10 +150,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 }
 
 export async function DELETE(_request: Request, { params }: { params: { id: string } }) {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!token) return unauthorized();
-  const session = await verifySession(token);
-  if (!session) return unauthorized();
+  const session = await getSessionOr401();
+  if (session instanceof NextResponse) return session;
   const actorId = session.memberId;
 
   const { id } = params;
@@ -265,7 +168,7 @@ export async function DELETE(_request: Request, { params }: { params: { id: stri
     return { kind: "ok" as const };
   });
 
-  if (result.kind === "not_found") return notFound();
+  if (result.kind === "not_found") return paymentNotFound();
 
   const body: DeletePaymentResponse = { deleted: true, id };
   return NextResponse.json(body, { status: 200 });

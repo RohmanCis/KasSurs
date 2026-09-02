@@ -25,13 +25,14 @@
 
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
 import { dateOnly, minimalSatuField } from "@/lib/validation";
-import type { DeleteExpenseResponse, ExpenseDTO, ExpenseErrorResponse } from "@/lib/types";
+import { getSessionOr401 } from "@/lib/api/session";
+import { invalidInput, sessionMemberGone } from "@/lib/api/respond";
+import { categoryNotFound, expenseNotFound, expenseSnapshot, toExpenseDTO } from "@/lib/dto/expense";
+import type { DeleteExpenseResponse } from "@/lib/types";
 
 // Validasi sama POST T-24 — semua opsional; minimalSatuField menjamin
 // minimal satu field diisi (body {} → 400).
@@ -44,88 +45,16 @@ const updateExpenseSchema = minimalSatuField(
   }),
 );
 
-function badRequest(message: string): NextResponse<ExpenseErrorResponse> {
-  return NextResponse.json({ error: "INVALID_INPUT", message }, { status: 400 });
-}
-
-function unauthorized(): NextResponse<ExpenseErrorResponse> {
-  // Fallback defensif — normalnya middleware (T-12) sudah menolak duluan.
-  return NextResponse.json(
-    { error: "UNAUTHORIZED", message: "Belum login atau sesi kedaluwarsa" },
-    { status: 401 },
-  );
-}
-
-function notFound(): NextResponse<ExpenseErrorResponse> {
-  return NextResponse.json(
-    { error: "EXPENSE_NOT_FOUND", message: "Pengeluaran tidak ditemukan" },
-    { status: 404 },
-  );
-}
-
-function categoryNotFound(): NextResponse<ExpenseErrorResponse> {
-  return NextResponse.json(
-    { error: "CATEGORY_NOT_FOUND", message: "Kategori tidak ditemukan" },
-    { status: 404 },
-  );
-}
-
-// Snapshot aman untuk audit log (FR-21) — tanggal sebagai ISO date string.
-// Duplikat lokal dari T-24 (expenseSnapshot) agar file ini mandiri; pola
-// sama, perubahan konsisten di kedua tempat.
-function expenseSnapshot(e: {
-  id: string;
-  categoryId: string;
-  deskripsi: string;
-  jumlah: number;
-  tanggal: Date;
-  createdAt: Date;
-}): Record<string, unknown> {
-  return {
-    id: e.id,
-    categoryId: e.categoryId,
-    deskripsi: e.deskripsi,
-    jumlah: e.jumlah,
-    tanggal: e.tanggal.toISOString().slice(0, 10),
-    createdAt: e.createdAt.toISOString(),
-  };
-}
-
-// Serialisasi ke ExpenseDTO (duplikat lokal T-24 — categoryNama denormalized).
-function toExpenseDTO(e: {
-  id: string;
-  categoryId: string;
-  categoryNama: string;
-  deskripsi: string;
-  jumlah: number;
-  tanggal: Date | string;
-  createdAt: Date | string;
-}): ExpenseDTO {
-  return {
-    id: e.id,
-    categoryId: e.categoryId,
-    categoryNama: e.categoryNama, // denormalized — bukan field asli tabel
-    deskripsi: e.deskripsi,
-    jumlah: e.jumlah,
-    tanggal: typeof e.tanggal === "string" ? e.tanggal : e.tanggal.toISOString().slice(0, 10),
-    createdAt: typeof e.createdAt === "string" ? e.createdAt : e.createdAt.toISOString(),
-  };
-}
-
 export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!token) return unauthorized();
-  const session = await verifySession(token);
-  if (!session) return unauthorized();
+  const session = await getSessionOr401();
+  if (session instanceof NextResponse) return session;
   const actorId = session.memberId;
 
   const { id } = params;
 
   const raw = await request.json().catch(() => null);
   const parsed = updateExpenseSchema.safeParse(raw);
-  if (!parsed.success) {
-    return badRequest(parsed.error.issues[0]?.message ?? "Input tidak valid");
-  }
+  if (!parsed.success) return invalidInput(parsed);
   const body = parsed.data;
 
   try {
@@ -170,38 +99,25 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       return { kind: "ok" as const, expense: updated };
     });
 
-    if (result.kind === "not_found") return notFound();
+    if (result.kind === "not_found") return expenseNotFound();
     if (result.kind === "category_not_found") return categoryNotFound();
 
-    const dto = toExpenseDTO({
-      id: result.expense.id,
-      categoryId: result.expense.categoryId,
-      categoryNama: result.expense.category.nama, // denormalized
-      deskripsi: result.expense.deskripsi,
-      jumlah: result.expense.jumlah,
-      tanggal: result.expense.tanggal,
-      createdAt: result.expense.createdAt,
-    });
+    const dto = toExpenseDTO(result.expense);
     return NextResponse.json(dto, { status: 200 });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2003") {
       // FK violation actorId audit log → member sesi hilang di DB → 401.
       // (categoryId sudah dicek exists di tx — satu-satunya FK lain adalah
       // actorId; jika suatu saat ada FK lain, inspeksi err.meta?.field_name.)
-      return NextResponse.json(
-        { error: "UNAUTHORIZED", message: "Sesi merujuk ke anggota yang tidak ada lagi" },
-        { status: 401 },
-      );
+      return sessionMemberGone();
     }
     throw err;
   }
 }
 
 export async function DELETE(_request: Request, { params }: { params: { id: string } }) {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!token) return unauthorized();
-  const session = await verifySession(token);
-  if (!session) return unauthorized();
+  const session = await getSessionOr401();
+  if (session instanceof NextResponse) return session;
   const actorId = session.memberId;
 
   const { id } = params;
@@ -218,7 +134,7 @@ export async function DELETE(_request: Request, { params }: { params: { id: stri
     return { kind: "ok" as const };
   });
 
-  if (result.kind === "not_found") return notFound();
+  if (result.kind === "not_found") return expenseNotFound();
 
   const body: DeleteExpenseResponse = { deleted: true, id };
   return NextResponse.json(body, { status: 200 });

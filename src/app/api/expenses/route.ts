@@ -23,13 +23,14 @@
 
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
 import { dateOnly, parseBulanTahunQuery } from "@/lib/validation";
-import type { ExpenseDTO, ExpenseErrorResponse } from "@/lib/types";
+import { getSessionOr401 } from "@/lib/api/session";
+import { badRequest, invalidInput, sessionMemberGone } from "@/lib/api/respond";
+import { categoryNotFound, expenseSnapshot, toExpenseDTO } from "@/lib/dto/expense";
+import type { ExpenseDTO } from "@/lib/types";
 
 // deskripsi: trim min 1, TANPA max — konsisten dengan pola string lain di
 // repo (members.nama/noHp juga tanpa max). jumlah > 0 di application layer
@@ -43,73 +44,9 @@ const createExpenseSchema = z.object({
   tanggal: dateOnly("tanggal"),
 });
 
-function badRequest(message: string): NextResponse<ExpenseErrorResponse> {
-  return NextResponse.json({ error: "INVALID_INPUT", message }, { status: 400 });
-}
-
-function unauthorized(): NextResponse<ExpenseErrorResponse> {
-  // Fallback defensif — normalnya middleware (T-12) sudah menolak duluan.
-  // Error code disamakan dengan middleware (UNAUTHORIZED) agar konsisten.
-  return NextResponse.json(
-    { error: "UNAUTHORIZED", message: "Belum login atau sesi kedaluwarsa" },
-    { status: 401 },
-  );
-}
-
-function notFound(): NextResponse<ExpenseErrorResponse> {
-  return NextResponse.json(
-    { error: "CATEGORY_NOT_FOUND", message: "Kategori tidak ditemukan" },
-    { status: 404 },
-  );
-}
-
-// Serialisasi ke ExpenseDTO. categoryNama adalah field denormalized (bukan
-// field asli tabel Expense) — berasal dari relasi category, untuk kemudahan
-// render list. Tanggal selalu ISO 8601 date-only (konvensi proyek).
-function toExpenseDTO(e: {
-  id: string;
-  categoryId: string;
-  categoryNama: string;
-  deskripsi: string;
-  jumlah: number;
-  tanggal: Date | string;
-  createdAt: Date | string;
-}): ExpenseDTO {
-  return {
-    id: e.id,
-    categoryId: e.categoryId,
-    categoryNama: e.categoryNama, // denormalized — bukan field asli tabel
-    deskripsi: e.deskripsi,
-    jumlah: e.jumlah,
-    tanggal: typeof e.tanggal === "string" ? e.tanggal : e.tanggal.toISOString().slice(0, 10),
-    createdAt: typeof e.createdAt === "string" ? e.createdAt : e.createdAt.toISOString(),
-  };
-}
-
-// Snapshot aman untuk audit log (FR-21) — tanggal sebagai ISO date string.
-function expenseSnapshot(e: {
-  id: string;
-  categoryId: string;
-  deskripsi: string;
-  jumlah: number;
-  tanggal: Date;
-  createdAt: Date;
-}): Record<string, unknown> {
-  return {
-    id: e.id,
-    categoryId: e.categoryId,
-    deskripsi: e.deskripsi,
-    jumlah: e.jumlah,
-    tanggal: e.tanggal.toISOString().slice(0, 10),
-    createdAt: e.createdAt.toISOString(),
-  };
-}
-
 export async function GET(request: Request) {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!token) return unauthorized();
-  const session = await verifySession(token);
-  if (!session) return unauthorized();
+  const session = await getSessionOr401();
+  if (session instanceof NextResponse) return session;
 
   const url = new URL(request.url);
   const categoryIdRaw = url.searchParams.get("categoryId");
@@ -138,32 +75,18 @@ export async function GET(request: Request) {
     orderBy: [{ tanggal: "desc" }, { createdAt: "desc" }],
   });
 
-  const dtos: ExpenseDTO[] = expenses.map((e) =>
-    toExpenseDTO({
-      id: e.id,
-      categoryId: e.categoryId,
-      categoryNama: e.category.nama, // denormalized
-      deskripsi: e.deskripsi,
-      jumlah: e.jumlah,
-      tanggal: e.tanggal,
-      createdAt: e.createdAt,
-    }),
-  );
+  const dtos: ExpenseDTO[] = expenses.map((e) => toExpenseDTO(e));
   return NextResponse.json(dtos);
 }
 
 export async function POST(request: Request) {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!token) return unauthorized();
-  const session = await verifySession(token);
-  if (!session) return unauthorized();
+  const session = await getSessionOr401();
+  if (session instanceof NextResponse) return session;
   const actorId = session.memberId;
 
   const raw = await request.json().catch(() => null);
   const parsed = createExpenseSchema.safeParse(raw);
-  if (!parsed.success) {
-    return badRequest(parsed.error.issues[0]?.message ?? "Input tidak valid");
-  }
+  if (!parsed.success) return invalidInput(parsed);
   const body = parsed.data;
 
   try {
@@ -190,17 +113,9 @@ export async function POST(request: Request) {
       return { kind: "ok" as const, expense, categoryNama: category.nama };
     });
 
-    if (result.kind === "not_found") return notFound();
+    if (result.kind === "not_found") return categoryNotFound();
 
-    const dto = toExpenseDTO({
-      id: result.expense.id,
-      categoryId: result.expense.categoryId,
-      categoryNama: result.categoryNama, // denormalized
-      deskripsi: result.expense.deskripsi,
-      jumlah: result.expense.jumlah,
-      tanggal: result.expense.tanggal,
-      createdAt: result.expense.createdAt,
-    });
+    const dto = toExpenseDTO({ ...result.expense, category: { nama: result.categoryNama } });
     return NextResponse.json(dto, { status: 201 });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
@@ -213,10 +128,7 @@ export async function POST(request: Request) {
       // inspeksi `err.meta?.field_name` untuk membedakan — JANGAN ubah
       // perilaku sekarang.
       if (err.code === "P2003") {
-        return NextResponse.json(
-          { error: "UNAUTHORIZED", message: "Sesi merujuk ke anggota yang tidak ada lagi" },
-          { status: 401 },
-        );
+        return sessionMemberGone();
       }
     }
     throw err;

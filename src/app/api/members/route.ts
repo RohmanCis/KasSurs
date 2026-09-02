@@ -20,13 +20,19 @@
 
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { hashPin, verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { hashPin } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
 import { parseBulanTahunQuery } from "@/lib/validation";
-import type { MemberDTO, MemberErrorResponse, PaymentStatus } from "@/lib/types";
+import { getSessionOr401 } from "@/lib/api/session";
+import { badRequest, invalidInput } from "@/lib/api/respond";
+import {
+  memberSnapshot,
+  phoneAlreadyRegistered,
+  toMemberDTO,
+} from "@/lib/dto/member";
+import type { MemberDTO, PaymentStatus } from "@/lib/types";
 
 // noHp divalidasi longgar (non-empty) — format bebas, jangan over-validate;
 // keunikan dijaga DB (unique) + dicek pre-create (409 pesan jelas).
@@ -35,38 +41,6 @@ const createMemberSchema = z.object({
   noHp: z.string().trim().min(1, "No HP wajib diisi"),
   pin: z.string().regex(/^\d{4,6}$/, "PIN harus 4-6 digit angka"),
 });
-
-function badRequest(message: string): NextResponse<MemberErrorResponse> {
-  return NextResponse.json({ error: "INVALID_INPUT", message }, { status: 400 });
-}
-
-function unauthorized(): NextResponse<MemberErrorResponse> {
-  // Fallback defensif — normalnya middleware (T-12) sudah menolak duluan.
-  // Error code disamakan dengan middleware (UNAUTHORIZED) agar konsisten.
-  return NextResponse.json(
-    { error: "UNAUTHORIZED", message: "Belum login atau sesi kedaluwarsa" },
-    { status: 401 },
-  );
-}
-
-function phoneConflict(noHp: string): NextResponse<MemberErrorResponse> {
-  return NextResponse.json(
-    { error: "PHONE_ALREADY_REGISTERED", message: `No HP ${noHp} sudah terdaftar` },
-    { status: 409 },
-  );
-}
-
-// Snapshot aman untuk audit: TANPA pinHash (hash tidak boleh bocor ke audit
-// log) — hanya field identitas + status yang relevan.
-function memberSnapshot(m: {
-  id: string;
-  nama: string;
-  noHp: string;
-  role: string;
-  statusAktif: boolean;
-}): Record<string, unknown> {
-  return { id: m.id, nama: m.nama, noHp: m.noHp, role: m.role, statusAktif: m.statusAktif };
-}
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -93,11 +67,7 @@ export async function GET(request: Request) {
   }
 
   const dtos: MemberDTO[] = members.map((m) => ({
-    id: m.id,
-    nama: m.nama,
-    noHp: m.noHp,
-    statusAktif: m.statusAktif,
-    role: m.role,
+    ...toMemberDTO(m),
     ...(bulan !== null
       ? { statusBayarBulanIni: (paidIds.has(m.id) ? "LUNAS" : "BELUM_BAYAR") as PaymentStatus }
       : {}),
@@ -106,23 +76,19 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!token) return unauthorized();
-  const session = await verifySession(token);
-  if (!session) return unauthorized();
+  const session = await getSessionOr401();
+  if (session instanceof NextResponse) return session;
   const actorId = session.memberId;
 
   const raw = await request.json().catch(() => null);
   const parsed = createMemberSchema.safeParse(raw);
-  if (!parsed.success) {
-    return badRequest(parsed.error.issues[0]?.message ?? "Input tidak valid");
-  }
+  if (!parsed.success) return invalidInput(parsed);
   const body = parsed.data;
 
   // Cek noHp unik dulu (409 pesan jelas) — jaring pengaman P2002 di bawah
   // tetap ada untuk race condition antar request.
   const existing = await prisma.member.findUnique({ where: { noHp: body.noHp } });
-  if (existing) return phoneConflict(body.noHp);
+  if (existing) return phoneAlreadyRegistered(body.noHp);
 
   const pinHash = await hashPin(body.pin);
   try {
@@ -142,19 +108,13 @@ export async function POST(request: Request) {
       return created;
     });
 
-    const dto: MemberDTO = {
-      id: member.id,
-      nama: member.nama,
-      noHp: member.noHp,
-      statusAktif: member.statusAktif,
-      role: member.role,
-    };
+    const dto = toMemberDTO(member);
     return NextResponse.json(dto, { status: 201 });
   } catch (err) {
     // Race condition: dua request POST noHp sama dalam waktu bersamaan →
     // constraint unique DB melindungi; tangkap P2002 → 409 sama.
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-      return phoneConflict(body.noHp);
+      return phoneAlreadyRegistered(body.noHp);
     }
     throw err;
   }

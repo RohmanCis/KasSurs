@@ -1,7 +1,7 @@
 # Tech Spec: KasSurs
 
 **Versi:** 1.3 (update post-implementasi Modul 0–3, 2026-09-01)
-**Status:** Implemented T-01–T-22 — detail state & gotchas lihat `.agents/HANDOFF.md`
+**Status:** Implemented T-01–T-37 + Modul R (UI V2.2) — sisa T-38–T-39 (Deployment); detail state & gotchas lihat `.agents/HANDOFF.md`
 **Lokasi File:** `.agents/2-TECH-SPEC.md`
 **Dependensi:** `.agents/1-PRD.md` (wajib dibaca sebelum implementasi)
 
@@ -12,9 +12,9 @@
 ### Tech Stack
 | Layer | Technology | Version |
 |-------|------------|---------|
-| Frontend | Next.js (App Router) | 14.2.35 |
-| Language | TypeScript | 5.9.3 |
-| Styling | Tailwind CSS | 3.4.19 |
+| Frontend | Next.js (App Router) | ^14.2.33 |
+| Language | TypeScript | ^5.7.3 |
+| Styling | Tailwind CSS | ^3.4.17 |
 | State | React Context + Server Components (tanpa state manager eksternal — skala kecil tidak butuh) | - |
 | Backend | Next.js API Routes / Route Handlers | 14.x (built-in) |
 | Database | PostgreSQL (via Supabase) | 15.x |
@@ -47,7 +47,10 @@ Mengikuti konvensi resmi Next.js 14+ App Router:
 kassurs/
 ├── .agents/
 │   ├── 1-PRD.md
-│   └── 2-TECH-SPEC.md
+│   ├── 2-TECH-SPEC.md
+│   ├── 3-DESIGN.md
+│   ├── 3-TASKS.md
+│   └── HANDOFF.md
 ├── prisma/
 │   ├── schema.prisma
 │   ├── seed.ts                # idempotent — skip admin jika role=ADMIN sudah ada
@@ -55,57 +58,69 @@ kassurs/
 ├── src/
 │   ├── app/
 │   │   ├── (auth)/
-│   │   │   └── login/
-│   │   │       └── page.tsx
+│   │   │   └── login/page.tsx
 │   │   ├── (admin)/
-│   │   │   ├── dashboard/page.tsx
+│   │   │   ├── dashboard/
+│   │   │   │   ├── loading.tsx        # skeleton route-level (FASE 3)
+│   │   │   │   └── page.tsx           # RSC (FASE 3)
 │   │   │   ├── anggota/page.tsx
 │   │   │   ├── pembayaran/page.tsx
 │   │   │   ├── pengeluaran/page.tsx
 │   │   │   └── laporan/page.tsx
 │   │   ├── (member)/
-│   │   │   └── status/page.tsx
+│   │   │   └── status/
+│   │   │       ├── loading.tsx        # skeleton route-level (FASE 3)
+│   │   │       └── page.tsx           # RSC (FASE 3)
 │   │   ├── api/
 │   │   │   ├── auth/
 │   │   │   │   ├── login/route.ts
 │   │   │   │   └── logout/route.ts
 │   │   │   ├── members/route.ts
 │   │   │   ├── members/[id]/route.ts
+│   │   │   ├── members/[id]/deactivate/route.ts
 │   │   │   ├── payments/route.ts
 │   │   │   ├── payments/[id]/route.ts
 │   │   │   ├── expenses/route.ts
 │   │   │   ├── expenses/[id]/route.ts
 │   │   │   ├── categories/route.ts
-│   │   │   └── reports/route.ts
+│   │   │   ├── dashboard/summary/route.ts
+│   │   │   └── reports/
+│   │   │       ├── pdf/route.ts
+│   │   │       └── excel/route.ts
+│   │   ├── error.tsx                  # root error boundary (Neo-Brutalism, reset)
+│   │   ├── globals.css
 │   │   ├── layout.tsx
-│   │   └── page.tsx
+│   │   ├── not-found.tsx
+│   │   └── page.tsx                   # root redirect by-role
 │   ├── components/
-│   │   ├── ui/               # komponen dasar (button, input, table, dll.)
-│   │   ├── dashboard/
-│   │   └── forms/
+│   │   ├── ui/                        # NeoButton, LogoutButton, FilterBar
+│   │   ├── dashboard/                 # TreasuryHero, MemberCard
+│   │   ├── forms/                     # LoginForm, MemberForm, ExpenseForm
+│   │   ├── layout/                    # BottomNav
+│   │   ├── member/                    # PassbookCard
+│   │   └── payments/                  # PaymentRapelDrawer, PaymentEditDrawer
 │   ├── lib/
-│   │   ├── prisma.ts          # Prisma client singleton
-│   │   ├── auth.ts            # JWT sign/verify, session helper
-│   │   ├── rate-limit.ts       # rate limiting login
-│   │   ├── audit.ts            # helper pencatatan audit log
-│   │   └── export/
-│   │       ├── pdf.ts
-│   │       └── excel.ts
-│   └── middleware.ts           # proteksi route berdasarkan role
+│   │   ├── api/                       # API Handler Kit #1: respond.ts, session.ts (getSessionOr401)
+│   │   ├── dto/                       # payment.ts, expense.ts, member.ts, category.ts (DTO + snapshot + error builder)
+│   │   ├── export/
+│   │   │   ├── pdf.ts
+│   │   │   └── excel.ts
+│   │   ├── prisma.ts                  # Prisma client singleton
+│   │   ├── auth.ts                    # JWT sign/verify, session helper
+│   │   ├── rate-limit.ts              # rate limiting login
+│   │   ├── audit.ts                   # helper pencatatan audit log
+│   │   ├── dashboard.ts               # getDashboardSummary — dipakai RSC + route summary
+│   │   ├── report-snapshot.ts         # FR-23 snapshot beku (+ pg_advisory_xact_lock race guard)
+│   │   ├── format.ts                  # NAMA_BULAN/formatRupiah/todayISO WIB-safe (deepening #3)
+│   │   ├── validation.ts              # dateOnly/minimalSatuField/parseBulanTahunQuery (deepening #4)
+│   │   ├── types.ts                   # kontrak API tunggal (26 interface + 12 union type)
+│   │   └── utils.ts                   # cn() — clsx + tailwind-merge
+│   └── middleware.ts                  # proteksi route berdasarkan role (+ re-issue sliding session)
 ├── tests/
-│   ├── unit/                   # Vitest — business logic murni (validasi, kalkulasi saldo, dll.)
-│   │   ├── auth.test.ts
-│   │   ├── payment-rules.test.ts
-│   │   └── audit.test.ts
-│   ├── integration/             # Vitest — API route handler dengan test DB
-│   │   ├── login.test.ts
-│   │   ├── payments.test.ts
-│   │   ├── expenses.test.ts
-│   │   └── members.test.ts
-│   └── e2e/                     # Playwright — smoke test alur kritikal end-to-end
-│       ├── login.spec.ts
-│       ├── catat-pembayaran.spec.ts
-│       └── export-laporan.spec.ts
+│   ├── setup-env.ts                   # wiring TEST_DATABASE_URL → test DB Docker 5433
+│   ├── unit/                          # Vitest — 9 file: auth, audit, export, format, jwt-confusion, rate-limit, sliding-session, smoke, validation
+│   ├── integration/                   # Vitest — 20 file: login, payments(+patch/race/p2003), expenses(+patch/p2003/edge), members(+patch/deactivate/reactivate), dashboard, reports(+race), summary(+race/empty-db), audit, lockout-e2e, race-categories
+│   └── e2e/                           # Playwright — 4 spec: login, catat-pembayaran, speed-tap, export-laporan (+ helpers.ts)
 ├── .env                        # WAJIB ada — Prisma CLI 5 baca .env (bukan .env.local); sinkron dengan .env.local
 ├── .env.local                  # runtime Next.js — jangan di-commit
 ├── vitest.config.mts           # harus .mts — .ts gagal ESM-in-CJS di Vitest 4
@@ -282,11 +297,11 @@ Next.js App Router — kombinasi Server Actions (untuk mutasi dari Server Compon
 |--------|------|-------------|------|
 | POST | `/api/auth/login` | Login dengan No HP + PIN | No |
 | POST | `/api/auth/logout` | Hapus session cookie | Yes |
-| GET | `/api/members?bulan=&tahun=` | Fetch **seluruh** anggota aktif sekaligus (tanpa parameter search — filter nama dilakukan **client-side**, bukan query berulang ke server); jika `bulan`/`tahun` diisi, sertakan status bayar per anggota agar frontend bisa sorting "Belum Bayar" duluan tanpa request tambahan | Admin |
+| GET | `/api/members?bulan=&tahun=` | Fetch **seluruh** anggota (aktif + nonaktif — UI manajemen butuh lihat anggota nonaktif; bedakan via field `statusAktif` di `MemberDTO`) sekaligus (tanpa parameter search — filter nama dilakukan **client-side**, bukan query berulang ke server); jika `bulan`/`tahun` diisi, sertakan status bayar per anggota agar frontend bisa sorting "Belum Bayar" duluan tanpa request tambahan | Admin |
 | POST | `/api/members` | Tambah anggota baru | Admin |
 | PATCH | `/api/members/[id]` | Update data anggota (termasuk reset PIN/No HP) | Admin |
 | PATCH | `/api/members/[id]/deactivate` | Nonaktifkan anggota. Return `403 Forbidden` jika target adalah role ADMIN dan merupakan satu-satunya ADMIN aktif tersisa | Admin |
-| GET | `/api/payments` | List pembayaran (filter: bulan, tahun, memberId, status) | Admin (semua) / Anggota (hanya diri sendiri) |
+| GET | `/api/payments` | List pembayaran (filter: bulan, tahun, memberId) | Admin (semua) / Anggota (hanya diri sendiri) |
 | POST | `/api/payments` | Catat pembayaran baru. Return `409 Conflict` dengan pesan "Sudah lunas bulan ini" jika constraint unique `[memberId, bulan, tahun]` terlanggar — tidak auto-redirect ke edit | Admin |
 | PATCH | `/api/payments/[id]` | Edit data pembayaran | Admin |
 | DELETE | `/api/payments/[id]` | Hapus data pembayaran | Admin |
@@ -399,6 +414,9 @@ interface DashboardSummaryResponse {
   totalKeluarBulanIni: number;
   // hanya terisi untuk role ADMIN:
   jumlahBelumBayar?: number;
+  // FASE 1 (2026-09-03, additive — dashboard tidak lagi fetch /api/members):
+  jumlahAnggotaAktif: number;  // member statusAktif=true
+  jumlahLunas: number;          // jumlah anggota AKTIF yang lunas bulan berjalan
 }
 
 // ===== Report Snapshot (FR-23 — payload beku saat export pertama periode) =====
@@ -446,7 +464,7 @@ interface AuditLogEntry {
 - Tanggal selalu dikirim sebagai ISO 8601 string (`"2026-08-30"` atau `"2026-08-30T10:00:00Z"`), tidak pernah sebagai timestamp Unix atau format lain.
 - Field yang di-*denormalize* untuk kemudahan render (misal `memberNama` di `PaymentDTO`) harus disebut eksplisit di komentar seperti di atas — supaya jelas ini bukan field asli dari tabel, agar tidak bingung saat lihat schema Prisma vs response API.
 
-**Status implementasi kontrak:** `src/lib/types.ts` sudah terpasang (14 interface + 6 union type, implementasi T-06). Body request PATCH/DELETE untuk Payment/Expense **belum didefinisikan** — definisikan saat task terkait (T-21/T-25), tetap di `types.ts` tunggal, jangan duplikat per endpoint.
+**Status implementasi kontrak:** `src/lib/types.ts` sudah terpasang (26 interface + 12 union type). Body request PATCH/DELETE untuk Payment/Expense serta error response per-domain (union error code + responsenya) juga sudah didefinisikan — semua di `types.ts` tunggal, jangan duplikat per endpoint.
 
 ---
 
@@ -527,6 +545,7 @@ interface AuditLogEntry {
 - Validasi input di setiap API route (misal dengan Zod) — cegah data tidak valid masuk ke database (No HP kosong, jumlah negatif, dll.).
 - **Audit log append-only** — tidak ada endpoint DELETE/PATCH untuk tabel `audit_logs`, memastikan jejak perubahan data keuangan tidak bisa dimanipulasi.
 - HTTPS wajib — otomatis disediakan oleh Vercel untuk semua deployment.
+- Security headers di `next.config.js` (FASE 1, 2026-09-03, terverifikasi live): `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, HSTS, `Referrer-Policy`, `Permissions-Policy`, `X-DNS-Prefetch-Control` + `poweredByHeader: false` + `reactStrictMode: true`. **CSP sengaja tidak disertakan** (butuh nonce — kompleksitas tak sebanding untuk V1).
 - Environment variable (`DATABASE_URL`, `JWT_SECRET`) disimpan di Vercel Environment Variables, tidak pernah di-commit ke repo.
 
 ### Performa
@@ -541,7 +560,7 @@ interface AuditLogEntry {
 - **Environment Variables** yang dibutuhkan: `DATABASE_URL` (Supabase pooler connection string, port 6543 transaction-mode), `DIRECT_URL` (untuk Prisma migrate), `JWT_SECRET`, `SEED_ADMIN_PHONE`, `SEED_ADMIN_PIN`.
 - **Direct host Supabase IPv6-only** pada mesin dev — host `db.*.supabase.co` tidak resolve. Workaround terbukti: `DIRECT_URL` pakai **session-mode pooler port 5432** (user `postgres.<ref>`). Samakan pola ini di Vercel env vars saat deployment.
 - **Dua file env di dev:** Prisma CLI 5 baca `.env`, Next.js runtime baca `.env.local` — keduanya wajib ada dan wajib sinkron (`.env` ter-cover .gitignore).
-- `TEST_DATABASE_URL` masih placeholder di `.env.example` — integration test saat ini pakai DB dev + cleanup per-test. **Wajib DB terpisah sebelum T-35/produksi.**
+- Test DB terisolasi: Docker `kassurs-test-db` (`postgres:17-alpine`, port 5433, user postgres, pass kassurs_test) — wajib start sebelum test (`docker start kassurs-test-db`). Wiring: `tests/setup-env.ts` override `TEST_DATABASE_URL`; E2E ikut pakai DB ini via `DATABASE_URL` override di `webServer` `playwright.config.ts` (port 3100, `reuseExistingServer: false` — dev DB tidak tersentuh).
 - Tidak perlu Sentry/monitoring eksternal di V1 — skala kecil, cukup andalkan Vercel built-in logs untuk debugging awal. Bisa ditambah nanti jika dibutuhkan.
 
 ### Strategi Testing
@@ -611,6 +630,6 @@ npm run dev
 ## 🔄 Status
 Versi 1.6 — di-update sesuai keputusan user 2026-09-01 sebelum Modul 6: **FR-23 Snapshot Laporan (laporan beku)** — tabel `report_snapshots` (payload `ReportSnapshotPayload` penuh: ringkasan + detail baris), 1 snapshot per `[bulan, tahun]`, dibuat saat export pertama, re-export periode sama render dari snapshot, `?regenerate=true` untuk koreksi; PDF & Excel bersumber satu snapshot; periode V1 bulan/tahun (rentang tanggal keluar dari V1). Semantik T-27 tidak berubah (accrual masuk / cash-flow keluar / saldo historis) — snapshot membekukan hasilnya. Perlu migration baru (`npx prisma migrate dev`).
 
-Versi 1.5 — di-update sesuai temuan implementasi Modul 5 (T-01–T-30 selesai: 92/92 test pass, build pass). Delta Modul 5: `GET /api/dashboard/summary` role-differentiated di handler (ANGGOTA sengaja lolos middleware — FR-14), `saldo`/`totalMasukBulanIni`/`totalKeluarBulanIni` agregat organisasi-wide identik lintas role, `jumlahBelumBayar` admin-only via field omission; semantik periode split — Payment accrual (kolom `bulan`/`tahun`) vs Expense cash-flow (rentang `tanggal`), `saldo` semua-histori otoritatif (oracle-approved, dipaksakan schema); BottomNav 4 tab menggantikan back-link manual; komponen reusable DataTable/FilterBar/StatusBadge (T-30) terpasang, konsumen pertama T-34. Progress terkini: `.agents/HANDOFF.md`.
+Versi 1.5 — di-update sesuai temuan implementasi Modul 5 (T-01–T-30 selesai: 92/92 test pass, build pass). Delta Modul 5: `GET /api/dashboard/summary` role-differentiated di handler (ANGGOTA sengaja lolos middleware — FR-14), `saldo`/`totalMasukBulanIni`/`totalKeluarBulanIni` agregat organisasi-wide identik lintas role, `jumlahBelumBayar` admin-only via field omission; semantik periode split — Payment accrual (kolom `bulan`/`tahun`) vs Expense cash-flow (rentang `tanggal`), `saldo` semua-histori otoritatif (oracle-approved, dipaksakan schema); BottomNav 4 tab menggantikan back-link manual; komponen reusable DataTable/FilterBar/StatusBadge (T-30) terpasang, konsumen pertama T-34. *(Catatan 2026-09-03: DataTable & StatusBadge kemudian DIHAPUS saat FASE-REDESIGN-3 cleanup — type `StatusBadgeStatus` dipindah ke FilterBar.tsx; BottomNav kini 5 tab.)* Progress terkini: `.agents/HANDOFF.md`.
 
-**Langkah berikutnya:** Modul 6 Reports (T-31–T-34).
+**Langkah berikutnya:** T-38–T-39 Deployment (Vercel env vars + `prisma migrate deploy` + `prisma db seed`) — detail di `.agents/HANDOFF.md` §4.

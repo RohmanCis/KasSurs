@@ -23,17 +23,15 @@
 
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
 import { dateOnly, parseBulanTahunQuery } from "@/lib/validation";
-import type {
-  PaymentDTO,
-  PaymentConflictResponse,
-  PaymentInputErrorResponse,
-} from "@/lib/types";
+import { getSessionOr401 } from "@/lib/api/session";
+import { badRequest, invalidInput, sessionMemberGone } from "@/lib/api/respond";
+import { alreadyPaid, paymentSnapshot, toPaymentDTO } from "@/lib/dto/payment";
+import { memberNotFound } from "@/lib/dto/member";
+import type { PaymentDTO } from "@/lib/types";
 
 // Jumlah > 0 divalidasi di application layer (business rule Bagian 4) —
 // BUKAN DB constraint; nominal boleh beda dari 30000 (rapel/sumbangan).
@@ -46,87 +44,9 @@ const createPaymentSchema = z.object({
   tanggalBayar: dateOnly("tanggalBayar"),
 });
 
-function badRequest(message: string): NextResponse<PaymentInputErrorResponse> {
-  return NextResponse.json({ error: "INVALID_INPUT", message }, { status: 400 });
-}
-
-function unauthorized(): NextResponse<PaymentInputErrorResponse> {
-  // Fallback defensif — normalnya middleware (T-12) sudah menolak duluan.
-  // Error code disamakan dengan middleware (UNAUTHORIZED) agar konsisten.
-  return NextResponse.json(
-    { error: "UNAUTHORIZED", message: "Belum login atau sesi kedaluwarsa" },
-    { status: 401 },
-  );
-}
-
-function notFound(): NextResponse<PaymentInputErrorResponse> {
-  return NextResponse.json(
-    { error: "MEMBER_NOT_FOUND", message: "Anggota tidak ditemukan" },
-    { status: 404 },
-  );
-}
-
-// Body EXACT PaymentConflictResponse (kontrak wajib — pesan literal, bukan
-// interpolasi): jangan ubah message.
-function alreadyPaid(existingPaymentId: string): NextResponse<PaymentConflictResponse> {
-  return NextResponse.json(
-    { error: "ALREADY_PAID", message: "Sudah lunas bulan ini", existingPaymentId },
-    { status: 409 },
-  );
-}
-
-// Serialisasi ke PaymentDTO. memberNama adalah field denormalized (bukan
-// field asli tabel Payment) — berasal dari relasi member, untuk kemudahan
-// render list. Tanggal selalu ISO 8601 (konvensi proyek).
-function toPaymentDTO(p: {
-  id: string;
-  memberId: string;
-  memberNama: string;
-  bulan: number;
-  tahun: number;
-  jumlah: number;
-  tanggalBayar: Date | string;
-  createdAt: Date | string;
-}): PaymentDTO {
-  return {
-    id: p.id,
-    memberId: p.memberId,
-    memberNama: p.memberNama, // denormalized — bukan field asli tabel
-    bulan: p.bulan,
-    tahun: p.tahun,
-    jumlah: p.jumlah,
-    tanggalBayar:
-      typeof p.tanggalBayar === "string" ? p.tanggalBayar : p.tanggalBayar.toISOString().slice(0, 10),
-    createdAt: typeof p.createdAt === "string" ? p.createdAt : p.createdAt.toISOString(),
-  };
-}
-
-// Snapshot aman untuk audit log (FR-21) — tanggal sebagai ISO string.
-function paymentSnapshot(p: {
-  id: string;
-  memberId: string;
-  bulan: number;
-  tahun: number;
-  jumlah: number;
-  tanggalBayar: Date;
-  createdAt: Date;
-}): Record<string, unknown> {
-  return {
-    id: p.id,
-    memberId: p.memberId,
-    bulan: p.bulan,
-    tahun: p.tahun,
-    jumlah: p.jumlah,
-    tanggalBayar: p.tanggalBayar.toISOString().slice(0, 10),
-    createdAt: p.createdAt.toISOString(),
-  };
-}
-
 export async function GET(request: Request) {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!token) return unauthorized();
-  const session = await verifySession(token);
-  if (!session) return unauthorized();
+  const session = await getSessionOr401();
+  if (session instanceof NextResponse) return session;
 
   const url = new URL(request.url);
   const memberIdRaw = url.searchParams.get("memberId");
@@ -157,33 +77,18 @@ export async function GET(request: Request) {
     orderBy: [{ tahun: "desc" }, { bulan: "desc" }],
   });
 
-  const dtos: PaymentDTO[] = payments.map((p) =>
-    toPaymentDTO({
-      id: p.id,
-      memberId: p.memberId,
-      memberNama: p.member.nama, // denormalized
-      bulan: p.bulan,
-      tahun: p.tahun,
-      jumlah: p.jumlah,
-      tanggalBayar: p.tanggalBayar,
-      createdAt: p.createdAt,
-    }),
-  );
+  const dtos: PaymentDTO[] = payments.map((p) => toPaymentDTO(p));
   return NextResponse.json(dtos);
 }
 
 export async function POST(request: Request) {
-  const token = cookies().get(SESSION_COOKIE_NAME)?.value;
-  if (!token) return unauthorized();
-  const session = await verifySession(token);
-  if (!session) return unauthorized();
+  const session = await getSessionOr401();
+  if (session instanceof NextResponse) return session;
   const actorId = session.memberId;
 
   const raw = await request.json().catch(() => null);
   const parsed = createPaymentSchema.safeParse(raw);
-  if (!parsed.success) {
-    return badRequest(parsed.error.issues[0]?.message ?? "Input tidak valid");
-  }
+  if (!parsed.success) return invalidInput(parsed);
   const body = parsed.data;
 
   try {
@@ -225,19 +130,10 @@ export async function POST(request: Request) {
       return { kind: "ok" as const, payment, memberNama: member.nama };
     });
 
-    if (result.kind === "not_found") return notFound();
+    if (result.kind === "not_found") return memberNotFound();
     if (result.kind === "conflict") return alreadyPaid(result.existingId);
 
-    const dto = toPaymentDTO({
-      id: result.payment.id,
-      memberId: result.payment.memberId,
-      memberNama: result.memberNama, // denormalized
-      bulan: result.payment.bulan,
-      tahun: result.payment.tahun,
-      jumlah: result.payment.jumlah,
-      tanggalBayar: result.payment.tanggalBayar,
-      createdAt: result.payment.createdAt,
-    });
+    const dto = toPaymentDTO({ ...result.payment, member: { nama: result.memberNama } });
     return NextResponse.json(dto, { status: 201 });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
@@ -260,10 +156,7 @@ export async function POST(request: Request) {
       // sudah dihapus manual di DB (tidak ada endpoint hapus member — hanya
       // soft delete). 401, bukan 500 — sesi sudah tidak valid.
       if (err.code === "P2003") {
-        return NextResponse.json(
-          { error: "UNAUTHORIZED", message: "Sesi merujuk ke anggota yang tidak ada lagi" },
-          { status: 401 },
-        );
+        return sessionMemberGone();
       }
     }
     throw err;

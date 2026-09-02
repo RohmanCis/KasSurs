@@ -29,7 +29,7 @@ Palet flat (hex), bukan OKLCH. Hitam `#000000` adalah warna struktural (semua bo
 
 | Role | Token Tailwind | Hex | Penggunaan |
 |---|---|---|---|
-| Canvas | `neo-bg` | `#FFFDF0` | Background utama halaman (retro pale, hangat — bukan putih steril) — sudah tidak dipakai: BottomNav memakai `neo-surface` |
+| Canvas | `neo-bg` | `#FFFDF0` | Background utama halaman (retro pale, hangat — bukan putih steril) — dipakai: `bg-neo-bg` di body (`layout.tsx`) |
 | Surface | `neo-surface` | `#FFFFFF` | Card, input field, area elevated, background BottomNav (alias `neo-card` tersedia di config) |
 | Structural Black | `neo-black` | `#000000` | SEMUA border, hard shadow, teks utama, tombol state aktif (inverted) |
 | Green (Lunas/Success) | `neo-green` | `#86EFAC` | Status LUNAS, tombol aksi utama (Simpan/Masuk), progress bar terisi |
@@ -54,16 +54,16 @@ Palet flat (hex), bukan OKLCH. Hitam `#000000` adalah warna struktural (semua bo
 
 ## 3. Typography
 
-**Satu font tunggal: Bricolage Grotesque** (via `next/font/google`, weights 400/500/600/700/800, CSS variable `--font-bricolage`). Karakter grotesque-experimentalnya cocok dengan estetika brutalist; tetap legible untuk Bahasa Indonesia. Fallback: `system-ui, sans-serif`.
+**Satu font tunggal: Bricolage Grotesque** (via `next/font/google`, subset weights 400/700/800, CSS variable `--font-bricolage`). Karakter grotesque-experimentalnya cocok dengan estetika brutalist; tetap legible untuk Bahasa Indonesia. Fallback: `system-ui, sans-serif`. (Amendemen FASE perf 2026-09-03: subset 3 weight — `font-medium`/`font-semibold`/`font-black` tidak di-load, class-nya dipetakan ke 400/700/800.)
 
-**Font kedua (khusus meta teknis): JetBrains Mono** (variable `--font-jetbrains-mono`, weights 600-800) — hanya untuk label meta kecil: route path (`/login`), kode/hex, badge teknis. Fallback: `monospace`.
+**Font kedua: TIDAK ADA** (amendemen 2026-09-03 — JetBrains Mono dihapus dari project, ~25KB woff2 hanya terpakai 1x badge). Meta teknis/badge pakai Bricolage + `tabular-nums`, atau generic mono stack (`font-mono` → `ui-monospace`/`SFMono-Regular`/`Menlo`/`monospace`).
 
 | Item | Pilihan |
 |---|---|
 | Body/UI | Bricolage Grotesque, weight dominan **700-800** (`font-bold`/`font-extrabold`) untuk label, tombol, heading; 400-500 hanya untuk teks pendukung panjang |
 | Nominal Rupiah | **Bricolage Grotesque + `tabular-nums`** (BUKAN mono) — saldo hero `text-3xl font-extrabold tabular-nums`; `font-variant-numeric: tabular-nums` menjamin digit rata kolom. JetBrains Mono tidak dipakai untuk nominal di mockup final |
-| Label kecil | uppercase, `tracking-wider`, font-black, ukuran 10-11px (`text-[10px]`–`text-xs`) |
-| Heading halaman | `text-xl`–`text-2xl`, font-black, `tracking-tight` |
+| Label kecil | uppercase, `tracking-wider`, font-extrabold, ukuran 10-11px (`text-[10px]`–`text-xs`) |
+| Heading halaman | `text-xl`–`text-2xl`, font-extrabold, `tracking-tight` |
 | Skala | `text-[10px]` (badge/meta) · `text-xs` (12px, label/body kecil) · `text-sm` (14px, body) · `text-base` (16px) · `text-lg` (20px, nominal kartu) · `text-2xl` (28px, saldo hero/heading) |
 
 **Catatan:** Jangan pakai Inter, jangan pakai Plus Jakarta Sans lagi (v1.0 sudah diganti). Dilarang gradien teks.
@@ -90,26 +90,26 @@ Resep inti (semua border hitam `#000`):
 `border-[2.5px] border-black bg-neo-surface rounded-2xl shadow-neo` (varian besar) atau `border-2 rounded-xl shadow-neo-sm` (varian kecil/list item).
 
 ### 5.2 `neo-btn` — tombol
-`border-[2.5px] border-black rounded-xl font-bold shadow-neo transition-all duration-100 select-none` + **press-down wajib:** `active:translate-x-[3.5px] active:translate-y-[3.5px] active:shadow-none`. Hover opsional: `hover:-translate-x-px hover:-translate-y-px` + shadow membesar. Durasi 100ms, easing `cubic-bezier(0.4,0,0.2,1)`. Semua tombol WAJIB punya feedback press-down — ini inti rasa "tactile".
+`border-[2.5px] border-black rounded-xl font-bold shadow-neo transition-[transform,box-shadow,background-color,color] duration-100 select-none` + **press-down wajib:** `active:translate-x-[3.5px] active:translate-y-[3.5px] active:shadow-none`. Hover opsional: `hover:-translate-x-px hover:-translate-y-px` + shadow membesar. Durasi 100ms, easing `cubic-bezier(0.4,0,0.2,1)`. Semua tombol WAJIB punya feedback press-down — ini inti rasa "tactile". (Amendemen FASE perf 2026-09-03: `transition-all` → scoped `[transform,box-shadow,background-color,color]` — repaint turun, visual identik.)
 
 ### 5.3 `neo-tag` — badge/label
 `border-2 border-black rounded-lg font-bold shadow-neo-sm px-2 py-0.5` + warna flat sesuai semantik (yellow=highlight, purple=label, pink=meta, green=lunas, coral=belum).
 
 ### 5.4 Roster card anggota (Speed-Tap)
-Resep persis mockup: `neo-member-card p-2.5 h-[72px] flex flex-col justify-between cursor-pointer border-[2.5px] border-black rounded-[14px] transition-all duration-[120ms]` + press-down `active:translate-x-[2.5px] active:translate-y-[2.5px] active:shadow-none`.
+Resep persis mockup: `neo-member-card p-2.5 h-[72px] flex flex-col justify-between cursor-pointer border-[2.5px] border-black rounded-[14px] transition-[transform,box-shadow,background-color,color] duration-[120ms]` + press-down `active:translate-x-[2.5px] active:translate-y-[2.5px] active:shadow-none`. (Amendemen FASE perf 2026-09-03: `transition-all` → scoped — repaint turun, visual identik.)
 - **Belum bayar:** `bg-white shadow-neo hover:bg-neo-yellow` — ikon `clock` di badge coral, nominal "Rp 30k" slate, badge bawah `bg-neo-coral` teks **"TAP LUNAS"**.
 - **Lunas:** `bg-neo-green shadow-neo-sm` — ikon `check` di badge putih, badge bawah `bg-white` teks **"LUNAS (tgl)"**.
 - Ikon badge: lucide `check`/`clock`, `w-3 h-3 stroke-[3]`, di dalam kotak kecil `border border-black rounded`.
 - Filter chip di atas roster: "Semua (30)" / "Belum (N)" — chip aktif **inverted** `bg-black text-white`, nonaktif `bg-white` / `bg-neo-coral`. Default ordering: **Belum Bayar selalu di atas**, baru Lunas (client-side sort dari data di memory).
 
 ### 5.5 Progress bar (chunky)
-Track: `h-3.5 bg-neo-gray border-2 border-black rounded-lg p-0.5`. Isi: `bg-neo-green rounded` dengan `transition-all duration-300`; `border-r-2 border-black` HANYA saat `persen > 0` (amendemen 2026-09-02 — cegah garis hitam 2px saat fill 0%).
+Track: `h-3.5 bg-neo-gray border-2 border-black rounded-lg p-0.5`. Isi: `bg-neo-green rounded` dengan `transition-[width] duration-300`; `border-r-2 border-black` HANYA saat `persen > 0` (amendemen 2026-09-02 — cegah garis hitam 2px saat fill 0%; amendemen FASE perf 2026-09-03: `transition-all` → `transition-[width]` — hanya lebar yang beranimasi).
 
 ### 5.6 Input
 `border-2 / border-[2.5px] border-black rounded-xl bg-white px-3 py-2.5 font-bold shadow-neo-sm`. Prefix (mis. "+62") = span terpisah dengan `border-r-[2.5px] border-black bg-neo-yellow`. Readonly/disabled: `bg-neo-gray` + ikon lucide (mis. `calendar`). Nominal besar: `text-2xl font-extrabold tabular-nums` (Bricolage, bukan mono).
 
 ### 5.7 Header bar halaman
-Warna flat per konteks (dashboard=Yellow, pembayaran=Green, pengeluaran=Coral, anggota=Purple, laporan=Orange, status anggota=Sky), `border-b-[2.5px] border-black`, judul uppercase font-black. (Amendemen 2026-09-02: /pembayaran split ke tab sendiri diberi Green — semua warna lain sudah terpakai; /anggota Purple menggantikan Sky sesuai keputusan user FASE-3.)
+Warna flat per konteks (dashboard=Yellow, pembayaran=Green, pengeluaran=Coral, anggota=Purple, laporan=Orange, status anggota=Sky), `border-b-[2.5px] border-black`, judul uppercase font-extrabold. (Amendemen 2026-09-02: /pembayaran split ke tab sendiri diberi Green — semua warna lain sudah terpakai; /anggota Purple menggantikan Sky sesuai keputusan user FASE-3.)
 
 ### 5.8 Toast (sonner)
 Styling neo-brutalist sesuai mockup in-app toast: `border-[3px] border-black bg-neo-yellow text-black font-extrabold text-xs rounded-xl shadow-neo-lg px-3.5 py-2.5` + ikon lucide `check` `stroke-[3]`. **Error toast = coral**: via `classNames` per-status di Toaster (`error: "bg-neo-coral"`, default/success kuning — amendemen 2026-09-02). Toast speed-tap = **undo toast `duration: 5000` + aksi "BATALKAN"** (lihat 5.10 Mitigasi Salah-Tap; auto-dismiss ~2.2s di mockup hanya demo, tidak dipakai). Toast sukses form tetap tampil dengan aksi eksplisit "Input Lagi" (lihat 5.10).
@@ -139,7 +139,7 @@ Speed-Tap 1-tap sengaja tanpa konfirmasi demi kecepatan; salah-tap dimitigasi 3 
   - Visual (FINAL 2026-09-02 — **inline**, menimpa spec "absolute kanan-atas" sebelumnya): badge "BARU" disisipkan inline di baris atas kartu, di antara nama dan kotak ikon status. Struktur DOM baris atas (kartu roster 72px, mengacu mockup baris 1073-1077):
     - Container: `flex items-center justify-between gap-1 w-full`
     - Kiri: `<span class="text-xs font-bold text-black truncate flex-1 min-w-0">{nama}</span>` — nama menyusut (truncate) sementara selama badge tampil; harga termurah, admin scan status bukan baca nama penuh
-    - Tengah (HANYA jika usia bayar < 10 menit): `<span class="pointer-events-none bg-neo-yellow border-1.5 border-black rounded px-1 text-[9px] font-black uppercase shadow-neo-sm shrink-0">BARU</span>`
+    - Tengah (HANYA jika usia bayar < 10 menit): `<span class="pointer-events-none bg-neo-yellow border-1.5 border-black rounded px-1 text-[9px] font-extrabold uppercase shadow-neo-sm shrink-0">BARU</span>`
     - Kanan: kotak status ikon check/clock `shrink-0 p-0.5 border border-black rounded` (tidak berubah dari mockup)
   - Alasan posisi inline: menghindari tabrakan dengan ikon status kanan-atas DAN menghindari corner-straddle yang memicu tap collision antar kartu di grid `gap-2`. Badge `pointer-events-none` — seluruh kartu tetap satu tap target.
   - Muncul INSTAN (tanpa delay animasi masuk; boleh popIn 200ms sekali) — kuning kontras di atas kartu hijau Lunas.
@@ -208,7 +208,7 @@ Level: **ringan tapi tactile** — press-down adalah animasi utama, bukan transi
 - Kontras WCAG AA: teks selalu hitam di atas warna flat terang (semua warna neo L tinggi — hitam di atasnya > 7:1); teks putih hanya di atas hitam pekat. Teks berwarna (`neo-darkgreen`/`neo-darkred`) hanya untuk nominal di atas putih.
 - Status tidak pernah hanya warna — selalu ada teks ("✓ Lunas", "Belum", "Tap Rp 30k").
 - Tap target ≥ 44×44px (tombol full-width `py-3.5`, roster card `p-3`, bottom bar `h-16`; chip filter/kategori & kontrol kecil pakai `min-h-[44px]` — amendemen 2026-09-02).
-- Label form selalu terlihat (uppercase font-black di atas input), bukan placeholder-only.
+- Label form selalu terlihat (uppercase font-extrabold di atas input), bukan placeholder-only.
 - `prefers-reduced-motion` menonaktikkan popIn/shake/press-translate.
 - Border tebal justru membantu low-vision: batas elemen selalu eksplisit.
 - Roster card keyboard-accessible (amendemen 2026-09-02): `tabIndex={0}` + Enter/Space → onTap + `focus-visible:ring-2 ring-inset ring-black`. Long-press (drawer rapel) tetap eksklusif pointer.
@@ -237,13 +237,15 @@ boxShadow: {
 borderWidth: { "1.5": "1.5px", "2.5": "2.5px", "3": "3px" },
 fontFamily: {
   sans: ["var(--font-bricolage)", "system-ui", "sans-serif"],
-  mono: ["var(--font-jetbrains-mono)", "monospace"],
+  mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
 },
 ```
 
 Utility class gabungan via `clsx` + `tailwind-merge` (`cn()` helper). Dependencies UI: `lucide-react` (ikon), `sonner` (toast), `vaul` (drawer), `clsx`, `tailwind-merge`.
 
 Acuan class/DOM per layar: `.agents/kassurs_ui_neobrutalism_final.html` — samakan struktur, jangan mengarang ulang.
+
+> Amendemen 2026-09-03: mockup masih load JetBrains Mono — TIDAK diikuti; font mono di mockup digantikan Bricolage/generic mono stack.
 
 ---
 
