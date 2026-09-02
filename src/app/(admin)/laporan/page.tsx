@@ -62,7 +62,7 @@ export default function LaporanPage() {
   // 2 kolom ikon+teks, tapi tetap resep neo-btn press-down penuh).
   const exportCardBase =
     "flex w-full items-center justify-between rounded-xl border-[2.5px] border-black p-3 text-left shadow-neo " +
-    "transition-all duration-100 select-none active:translate-x-[3.5px] active:translate-y-[3.5px] active:shadow-none " +
+    "transition-[transform,box-shadow,background-color,color] duration-100 select-none active:translate-x-[3.5px] active:translate-y-[3.5px] active:shadow-none " +
     "disabled:translate-x-[3.5px] disabled:translate-y-[3.5px] disabled:bg-neo-gray disabled:shadow-none disabled:cursor-not-allowed";
 
   return (
@@ -135,7 +135,7 @@ export default function LaporanPage() {
                 <div className="text-xs font-extrabold">
                   {generating === "pdf" ? "MEMBUAT PDF..." : "EXPORT LAPORAN PDF"}
                 </div>
-                <div className="text-[10px] font-medium text-slate-800">
+                <div className="text-[10px] font-bold text-slate-800">
                   Format resmi rekap kas siap share WA
                 </div>
               </div>
@@ -158,7 +158,7 @@ export default function LaporanPage() {
                 <div className="text-xs font-extrabold">
                   {generating === "excel" ? "MEMBUAT EXCEL..." : "EXPORT DATA EXCEL (.XLSX)"}
                 </div>
-                <div className="text-[10px] font-medium text-slate-800">
+                <div className="text-[10px] font-bold text-slate-800">
                   Data mentah transaksi untuk backup
                 </div>
               </div>

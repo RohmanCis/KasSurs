@@ -34,6 +34,11 @@ import BottomNav from "@/components/layout/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
 import NeoButton from "@/components/ui/NeoButton";
 import { cn } from "@/lib/utils";
+import {
+  formatRupiah,
+  formatTanggalSingkat,
+  todayISO,
+} from "@/lib/format";
 import type {
   MemberDTO,
   PaymentConflictResponse,
@@ -56,25 +61,6 @@ const NEO_ACTION_STYLE: CSSProperties = {
   marginLeft: 8,
   flexShrink: 0,
 };
-
-function formatRupiah(n: number): string {
-  return `Rp ${n.toLocaleString("id-ID")}`;
-}
-
-function formatTanggalSingkat(iso: string): string {
-  return new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short" }).format(
-    new Date(`${iso}T00:00:00`)
-  );
-}
-
-// Hari ini date-only LOCAL (pola ExpenseForm — bukan toISOString: UTC bisa
-// bergeser sehari di WIB 00:00-06:59, oracle #2 fix). Kontrak tetap YYYY-MM-DD.
-function todayISO(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-    d.getDate()
-  ).padStart(2, "0")}`;
-}
 
 function vibrate(pattern: number | number[]) {
   if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(pattern);
@@ -141,24 +127,27 @@ export default function PembayaranPage() {
   // Flip kartu roster ke LUNAS hanya jika payment (jika ada) milik periode
   // roster. 409 cross-month: existing milik bulan lain → kartu bulan berjalan
   // TETAP Belum (fix bug e2e test 4: kartu salah flip LUNAS).
-  function tandaiLunas(memberId: string, payment?: PaymentDTO) {
-    const periodeRoster = !payment || (payment.bulan === bulan && payment.tahun === tahun);
-    if (periodeRoster) {
-      setMembers((cur) =>
-        cur.map((m) => (m.id === memberId ? { ...m, statusBayarBulanIni: "LUNAS" } : m))
-      );
-    }
-    if (payment) {
-      // paymentsById SELALU diisi (cross-month pun) — sumber lookup drawer edit
-      // (deep-link 409 butuh data ada di map, walau bukan periode roster).
-      setPaymentsById((cur) => new Map(cur).set(payment.id, payment));
+  const tandaiLunas = useCallback(
+    (memberId: string, payment?: PaymentDTO) => {
+      const periodeRoster = !payment || (payment.bulan === bulan && payment.tahun === tahun);
       if (periodeRoster) {
-        setPaymentsByMember((cur) => new Map(cur).set(memberId, payment));
+        setMembers((cur) =>
+          cur.map((m) => (m.id === memberId ? { ...m, statusBayarBulanIni: "LUNAS" } : m))
+        );
       }
-    }
-  }
+      if (payment) {
+        // paymentsById SELALU diisi (cross-month pun) — sumber lookup drawer edit
+        // (deep-link 409 butuh data ada di map, walau bukan periode roster).
+        setPaymentsById((cur) => new Map(cur).set(payment.id, payment));
+        if (periodeRoster) {
+          setPaymentsByMember((cur) => new Map(cur).set(memberId, payment));
+        }
+      }
+    },
+    [bulan, tahun]
+  );
 
-  function tandaiBelum(memberId: string) {
+  const tandaiBelum = useCallback((memberId: string) => {
     setMembers((cur) =>
       cur.map((m) => (m.id === memberId ? { ...m, statusBayarBulanIni: "BELUM_BAYAR" } : m))
     );
@@ -172,162 +161,180 @@ export default function PembayaranPage() {
       next.delete(memberId);
       return next;
     });
-  }
+  }, []);
 
-  function tandaiPending(memberId: string, pending: boolean) {
+  const tandaiPending = useCallback((memberId: string, pending: boolean) => {
     setPendingIds((cur) => {
       const next = new Set(cur);
       if (pending) next.add(memberId);
       else next.delete(memberId);
       return next;
     });
-  }
+  }, []);
+
+  const undoPayment = useCallback(
+    async (dto: PaymentDTO) => {
+      try {
+        const res = await fetch(`/api/payments/${dto.id}`, { method: "DELETE" });
+        if (res.status === 401) {
+          keLogin();
+          return;
+        }
+        if (!res.ok) {
+          toast.error("Gagal membatalkan. Buka kartu Lunas untuk hapus manual.", {
+            actionButtonStyle: NEO_ACTION_STYLE,
+          });
+          return;
+        }
+        tandaiBelum(dto.memberId);
+        setPaymentsById((cur) => {
+          const next = new Map(cur);
+          next.delete(dto.id);
+          return next;
+        });
+        vibrate([30, 40, 30]); // pola undo dibedakan (5.10 d)
+        toast(`Pembayaran ${dto.memberNama} dibatalkan`);
+      } catch {
+        toast.error("Tidak bisa terhubung ke server.");
+      }
+    },
+    [keLogin, tandaiBelum]
+  );
 
   // Undo toast 5 detik — paymentId di CLOSURE (non-blocking scoped undo,
   // 5.10 protocol): undo hanya berlaku untuk payment toast ini.
-  function tampilkanUndoToast(dto: PaymentDTO) {
-    toast(`✓ ${dto.memberNama} Lunas (${formatRupiah(dto.jumlah)})`, {
-      duration: 5000,
-      action: {
-        label: "BATALKAN",
-        onClick: () => undoPayment(dto),
-      },
-      actionButtonStyle: NEO_ACTION_STYLE,
-    });
-  }
-
-  async function undoPayment(dto: PaymentDTO) {
-    try {
-      const res = await fetch(`/api/payments/${dto.id}`, { method: "DELETE" });
-      if (res.status === 401) {
-        keLogin();
-        return;
-      }
-      if (!res.ok) {
-        toast.error("Gagal membatalkan. Buka kartu Lunas untuk hapus manual.", {
-          actionButtonStyle: NEO_ACTION_STYLE,
-        });
-        return;
-      }
-      tandaiBelum(dto.memberId);
-      setPaymentsById((cur) => {
-        const next = new Map(cur);
-        next.delete(dto.id);
-        return next;
+  const tampilkanUndoToast = useCallback(
+    (dto: PaymentDTO) => {
+      toast(`✓ ${dto.memberNama} Lunas (${formatRupiah(dto.jumlah)})`, {
+        duration: 5000,
+        action: {
+          label: "BATALKAN",
+          onClick: () => undoPayment(dto),
+        },
+        actionButtonStyle: NEO_ACTION_STYLE,
       });
-      vibrate([30, 40, 30]); // pola undo dibedakan (5.10 d)
-      toast(`Pembayaran ${dto.memberNama} dibatalkan`);
-    } catch {
-      toast.error("Tidak bisa terhubung ke server.");
-    }
-  }
+    },
+    [undoPayment]
+  );
 
   // 409: truth server = sudah lunas. Settle kartu ke Lunas (TIDAK rollback),
   // badge dari createdAt payment existing, deep-link drawer edit.
-  async function settleConflict(member: MemberDTO, existingPaymentId: string, b: number, t: number) {
-    try {
-      const res = await fetch(`/api/payments?bulan=${b}&tahun=${t}`);
-      if (res.status === 401) {
-        keLogin();
-        return;
-      }
-      if (res.ok) {
-        const ps = (await res.json()) as PaymentDTO[];
-        const existing = ps.find((p) => p.id === existingPaymentId);
-        if (existing) {
-          tandaiLunas(member.id, existing);
-          // Badge BARU mengikuti usia createdAt ASLI (bukan "sekarang") —
-          // payment lama (>10 mnt) tidak dapat badge palsu. DAN hanya untuk
-          // payment periode roster (oracle #2 fix: badge di kartu BELUM pada
-          // 409 cross-month membingungkan — kartu tidak flip, badge jangan tampil).
-          if (existing.bulan === bulan && existing.tahun === tahun) {
-            setBaruAt((cur) => new Map(cur).set(member.id, Date.parse(existing.createdAt)));
-          }
-          setEditPaymentId(existing.id);
+  const settleConflict = useCallback(
+    async (member: MemberDTO, existingPaymentId: string, b: number, t: number) => {
+      try {
+        const res = await fetch(`/api/payments?bulan=${b}&tahun=${t}`);
+        if (res.status === 401) {
+          keLogin();
+          return;
         }
+        if (res.ok) {
+          const ps = (await res.json()) as PaymentDTO[];
+          const existing = ps.find((p) => p.id === existingPaymentId);
+          if (existing) {
+            tandaiLunas(member.id, existing);
+            // Badge BARU mengikuti usia createdAt ASLI (bukan "sekarang") —
+            // payment lama (>10 mnt) tidak dapat badge palsu. DAN hanya untuk
+            // payment periode roster (oracle #2 fix: badge di kartu BELUM pada
+            // 409 cross-month membingungkan — kartu tidak flip, badge jangan tampil).
+            if (existing.bulan === bulan && existing.tahun === tahun) {
+              setBaruAt((cur) => new Map(cur).set(member.id, Date.parse(existing.createdAt)));
+            }
+            setEditPaymentId(existing.id);
+          }
+        }
+      } catch {
+        // Abaikan — kartu sudah settle Lunas; drawer gagal terbuka tidak fatal.
       }
-    } catch {
-      // Abaikan — kartu sudah settle Lunas; drawer gagal terbuka tidak fatal.
-    }
-    toast("Sudah lunas bulan ini — membuka detail pembayaran.", {
-      actionButtonStyle: NEO_ACTION_STYLE,
-    });
-  }
+      toast("Sudah lunas bulan ini — membuka detail pembayaran.", {
+        actionButtonStyle: NEO_ACTION_STYLE,
+      });
+    },
+    [bulan, tahun, keLogin, tandaiLunas]
+  );
 
   // ===== POST shared (speed-tap & rapel) =====
-  async function kirimPembayaran(
-    member: MemberDTO,
-    input: RapelInput,
-    sumber: "tap" | "rapel"
-  ) {
-    const periodeRoster = input.bulan === bulan && input.tahun === tahun;
-    try {
-      const res = await fetch("/api/payments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId: member.id, ...input }),
-      });
-      if (res.status === 401) {
-        keLogin();
-        return;
-      }
-
-      if (res.status === 201) {
-        const dto = (await res.json()) as PaymentDTO;
-        if (periodeRoster) {
-          tandaiLunas(member.id, dto);
-          setBaruAt((cur) => new Map(cur).set(member.id, Date.now()));
+  const kirimPembayaran = useCallback(
+    async (member: MemberDTO, input: RapelInput, sumber: "tap" | "rapel") => {
+      const periodeRoster = input.bulan === bulan && input.tahun === tahun;
+      try {
+        const res = await fetch("/api/payments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ memberId: member.id, ...input }),
+        });
+        if (res.status === 401) {
+          keLogin();
+          return;
         }
-        vibrate(45);
-        tampilkanUndoToast(dto);
-        if (sumber === "rapel") setRapelMemberId(null);
-        return;
-      }
 
-      if (res.status === 409) {
-        const data = (await res.json()) as PaymentConflictResponse;
-        if (sumber === "rapel") setRapelMemberId(null);
-        // Cross-month: data existing tidak ada di fetch roster → settleConflict
-        // melakukan fetch tambahan periode body (langkah 3 tech spec).
-        await settleConflict(member, data.existingPaymentId, input.bulan, input.tahun);
-        return;
-      }
+        if (res.status === 201) {
+          const dto = (await res.json()) as PaymentDTO;
+          if (periodeRoster) {
+            tandaiLunas(member.id, dto);
+            setBaruAt((cur) => new Map(cur).set(member.id, Date.now()));
+          }
+          vibrate(45);
+          tampilkanUndoToast(dto);
+          if (sumber === "rapel") setRapelMemberId(null);
+          return;
+        }
 
-      // Gagal lain → rollback (speed-tap sudah optimistic flip)
-      if (sumber === "tap" && periodeRoster) tandaiBelum(member.id);
-      const data = (await res.json().catch(() => null)) as { message?: string } | null;
-      toast.error(data?.message || "Gagal menyimpan pembayaran. Coba lagi.");
-    } catch {
-      if (sumber === "tap" && periodeRoster) tandaiBelum(member.id);
-      toast.error("Tidak bisa terhubung ke server. Periksa koneksi, lalu coba lagi.");
-    }
-  }
+        if (res.status === 409) {
+          const data = (await res.json()) as PaymentConflictResponse;
+          if (sumber === "rapel") setRapelMemberId(null);
+          // Cross-month: data existing tidak ada di fetch roster → settleConflict
+          // melakukan fetch tambahan periode body (langkah 3 tech spec).
+          await settleConflict(member, data.existingPaymentId, input.bulan, input.tahun);
+          return;
+        }
+
+        // Gagal lain → rollback (speed-tap sudah optimistic flip)
+        if (sumber === "tap" && periodeRoster) tandaiBelum(member.id);
+        const data = (await res.json().catch(() => null)) as { message?: string } | null;
+        toast.error(data?.message || "Gagal menyimpan pembayaran. Coba lagi.");
+      } catch {
+        if (sumber === "tap" && periodeRoster) tandaiBelum(member.id);
+        toast.error("Tidak bisa terhubung ke server. Periksa koneksi, lalu coba lagi.");
+      }
+    },
+    [bulan, tahun, keLogin, tandaiBelum, tandaiLunas, tampilkanUndoToast, settleConflict]
+  );
 
   // ===== Tap kartu (mode a + buka drawer edit) =====
-  async function handleTap(memberId: string) {
-    const member = members.find((m) => m.id === memberId);
-    if (!member || pendingIds.has(memberId)) return; // in-flight: silent ignore
+  // useCallback (FASE 2) — handler stabil agar React.memo(MemberCard) efektif:
+  // pencarian/filter tidak me-re-render kartu yang props-nya tak berubah.
+  const handleTap = useCallback(
+    async (memberId: string) => {
+      const member = members.find((m) => m.id === memberId);
+      if (!member || pendingIds.has(memberId)) return; // in-flight: silent ignore
 
-    if (member.statusBayarBulanIni === "LUNAS") {
-      const p = paymentsByMember.get(memberId);
-      if (p) setEditPaymentId(p.id);
-      return;
-    }
+      if (member.statusBayarBulanIni === "LUNAS") {
+        const p = paymentsByMember.get(memberId);
+        if (p) setEditPaymentId(p.id);
+        return;
+      }
 
-    // 1-Tap Speed-Tap: optimistic flip SEBELUM response
-    tandaiPending(memberId, true);
-    tandaiLunas(memberId);
-    setBaruAt((cur) => new Map(cur).set(memberId, Date.now()));
-    try {
-      await kirimPembayaran(
-        member,
-        { jumlah: JUMLAH_DEFAULT, bulan, tahun, tanggalBayar: todayISO() },
-        "tap"
-      );
-    } finally {
-      tandaiPending(memberId, false);
-    }
-  }
+      // 1-Tap Speed-Tap: optimistic flip SEBELUM response
+      tandaiPending(memberId, true);
+      tandaiLunas(memberId);
+      setBaruAt((cur) => new Map(cur).set(memberId, Date.now()));
+      try {
+        await kirimPembayaran(
+          member,
+          { jumlah: JUMLAH_DEFAULT, bulan, tahun, tanggalBayar: todayISO() },
+          "tap"
+        );
+      } finally {
+        tandaiPending(memberId, false);
+      }
+    },
+    [bulan, tahun, members, pendingIds, paymentsByMember, kirimPembayaran, tandaiLunas, tandaiPending]
+  );
+
+  // Long-press → rapel drawer. Setter state stabil → callback sekali buat.
+  const bukaRapel = useCallback((memberId: string) => {
+    setRapelMemberId(memberId);
+  }, []);
 
   // ===== Rapel drawer submit (mode b) =====
   async function handleRapelSubmit(input: RapelInput) {
@@ -466,7 +473,7 @@ export default function PembayaranPage() {
             onClick={() => setFilter("semua")}
             data-testid="chip-filter-semua"
             className={cn(
-              "inline-flex min-h-[44px] items-center rounded-xl border-[2.5px] border-black px-2.5 py-1 text-[10px] shadow-neo transition-all duration-100 select-none active:translate-x-[3.5px] active:translate-y-[3.5px] active:shadow-none",
+              "inline-flex min-h-[44px] items-center rounded-xl border-[2.5px] border-black px-2.5 py-1 text-[10px] shadow-neo transition-[transform,box-shadow,background-color,color] duration-100 select-none active:translate-x-[3.5px] active:translate-y-[3.5px] active:shadow-none",
               filter === "semua" ? "bg-black font-extrabold text-white" : "bg-white font-bold text-black"
             )}
           >
@@ -477,7 +484,7 @@ export default function PembayaranPage() {
             onClick={() => setFilter("belum")}
             data-testid="chip-filter-belum"
             className={cn(
-              "inline-flex min-h-[44px] items-center rounded-xl border-[2.5px] border-black px-2.5 py-1 text-[10px] shadow-neo transition-all duration-100 select-none active:translate-x-[3.5px] active:translate-y-[3.5px] active:shadow-none",
+              "inline-flex min-h-[44px] items-center rounded-xl border-[2.5px] border-black px-2.5 py-1 text-[10px] shadow-neo transition-[transform,box-shadow,background-color,color] duration-100 select-none active:translate-x-[3.5px] active:translate-y-[3.5px] active:shadow-none",
               filter === "belum" ? "bg-black font-extrabold text-white" : "bg-neo-coral font-bold text-black"
             )}
           >
@@ -551,7 +558,7 @@ export default function PembayaranPage() {
                     lunas && payment ? `Rp ${Math.round(payment.jumlah / 1000)}k` : "Rp 30k"
                   }
                   onTap={handleTap}
-                  onLongPress={(id) => setRapelMemberId(id)}
+                  onLongPress={bukaRapel}
                   data-testid={`member-card-${m.id}`}
                 />
               );

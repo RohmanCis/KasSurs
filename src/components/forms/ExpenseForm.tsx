@@ -19,6 +19,7 @@ import { useState, type FormEvent } from "react";
 import { Calendar, Plus, Save } from "lucide-react";
 import NeoButton from "@/components/ui/NeoButton";
 import { cn } from "@/lib/utils";
+import { formatRibuan, todayISO } from "@/lib/format";
 import type {
   CategoryDTO,
   CreateExpenseRequest,
@@ -34,19 +35,6 @@ interface ExpenseFormProps {
   onError: (pesan: string, retry: (() => void) | null) => void;
   // Aditif: kategori custom baru tersimpan → parent update list (FR-10).
   onCategoryAdded?: (dto: CategoryDTO) => void;
-}
-
-// Tanggal hari ini sebagai "YYYY-MM-DD" LOKAL (bukan toISOString — UTC
-// bisa bergeser sehari di timezone WIB).
-function todayISO(): string {
-  const d = new Date();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${d.getFullYear()}-${mm}-${dd}`;
-}
-
-function formatRibuan(digits: string): string {
-  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 const labelClass = "mb-1 block text-[10px] font-extrabold uppercase tracking-wider text-black";
@@ -187,7 +175,7 @@ export default function ExpenseForm({
                 disabled={loading}
                 data-testid={`chip-kategori-${c.id}`}
                 className={cn(
-                  "inline-flex min-h-[44px] flex-shrink-0 items-center rounded-xl border-[2.5px] border-black px-3 py-1 shadow-neo-sm transition-all duration-100 select-none",
+                  "inline-flex min-h-[44px] flex-shrink-0 items-center rounded-xl border-[2.5px] border-black px-3 py-1 shadow-neo-sm transition-[transform,box-shadow,background-color,color] duration-100 select-none",
                   "active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
                   aktif ? "bg-black font-extrabold text-white" : "bg-white font-bold text-black"
                 )}
@@ -201,7 +189,7 @@ export default function ExpenseForm({
             onClick={() => setTambahKategori((v) => !v)}
             disabled={loading}
             data-testid="chip-kategori-baru"
-            className="flex min-h-[44px] flex-shrink-0 items-center gap-1 rounded-xl border-[2.5px] border-dashed border-black bg-neo-yellow px-3 py-1 font-bold text-black shadow-neo-sm transition-all duration-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+            className="flex min-h-[44px] flex-shrink-0 items-center gap-1 rounded-xl border-[2.5px] border-dashed border-black bg-neo-yellow px-3 py-1 font-bold text-black shadow-neo-sm transition-[transform,box-shadow,background-color,color] duration-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
           >
             <Plus className="h-3.5 w-3.5 stroke-[3]" aria-hidden="true" /> Baru
           </button>

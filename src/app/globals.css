@@ -7,11 +7,6 @@
    Body base styling kini di layout.tsx (bg-neo-bg text-black). */
 
 @layer utilities {
-  /* Nominal Rupiah: angka rata kolom (AGENTS.md code style) */
-  .tabular {
-    font-variant-numeric: tabular-nums;
-  }
-
   /* Shake halus untuk error field/banner (3-DESIGN Bagian 6: 150ms,
      ease-in-out). prefers-reduced-motion: rule global di bawah
      mematikannya otomatis (animation-duration 0.01ms). */

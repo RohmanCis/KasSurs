@@ -184,7 +184,7 @@ export default function LoginForm() {
           >
             PIN Keamanan (4-6 Digit)
           </label>
-          <span className="font-mono text-[9px] bg-neo-pink px-1.5 py-0.5 border border-black rounded font-extrabold uppercase">
+          <span className="text-[9px] bg-neo-pink px-1.5 py-0.5 border border-black rounded font-extrabold uppercase tabular-nums">
             Bcrypt Hash
           </span>
         </div>
@@ -209,7 +209,7 @@ export default function LoginForm() {
               aria-label={`Digit PIN ${i + 1}`}
               data-testid={`login-pin-box-${i}`}
               className={cn(
-                "h-10 w-full border-[2.5px] border-black bg-white rounded-lg text-center font-extrabold text-base shadow-neo-sm",
+                "h-11 w-full border-[2.5px] border-black bg-white rounded-lg text-center font-extrabold text-base shadow-neo-sm",
                 "focus:outline-none focus:bg-neo-yellow focus:ring-2 focus:ring-black disabled:bg-neo-gray"
               )}
             />

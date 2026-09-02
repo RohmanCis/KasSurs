@@ -30,27 +30,19 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
+import { dateOnly, minimalSatuField } from "@/lib/validation";
 import type { DeleteExpenseResponse, ExpenseDTO, ExpenseErrorResponse } from "@/lib/types";
 
-// Validasi sama POST T-24 — semua opsional; refine menjamin minimal satu
-// field diisi (body {} → 400).
-const updateExpenseSchema = z
-  .object({
+// Validasi sama POST T-24 — semua opsional; minimalSatuField menjamin
+// minimal satu field diisi (body {} → 400).
+const updateExpenseSchema = minimalSatuField(
+  z.object({
     categoryId: z.string().trim().min(1, "Kategori wajib diisi").optional(),
     deskripsi: z.string().trim().min(1, "Deskripsi wajib diisi").optional(),
     jumlah: z.number().int().positive("Jumlah harus lebih dari 0").optional(),
-    tanggal: z
-      .string()
-      .refine(
-        (s) =>
-          /^\d{4}-\d{2}-\d{2}$/.test(s) &&
-          !Number.isNaN(Date.parse(s)) &&
-          new Date(s).toISOString().slice(0, 10) === s,
-        "tanggal harus tanggal ISO (YYYY-MM-DD)",
-      )
-      .optional(),
-  })
-  .refine((v) => Object.keys(v).length > 0, "Minimal satu field wajib diisi");
+    tanggal: dateOnly("tanggal").optional(),
+  }),
+);
 
 function badRequest(message: string): NextResponse<ExpenseErrorResponse> {
   return NextResponse.json({ error: "INVALID_INPUT", message }, { status: 400 });

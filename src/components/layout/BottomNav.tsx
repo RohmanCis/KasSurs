@@ -62,10 +62,10 @@ export default function BottomNav() {
                 className={cn(
                   // Press-down wajib di semua elemen interaktif (5.2) —
                   // skala kecil (2px) karena tab nav bukan aksi utama.
-                  "mx-0.5 flex min-h-[44px] flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1 text-[10px] transition-all duration-100 select-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-black",
+                  "mx-0.5 flex min-h-[44px] flex-col items-center justify-center gap-0.5 rounded-lg px-1 py-1 text-[10px] transition-[transform,box-shadow,background-color,color] duration-100 select-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none focus:outline-none focus:ring-2 focus:ring-inset focus:ring-black",
                   aktif
-                    ? "border-2 border-black bg-neo-yellow font-black text-black shadow-neo-sm"
-                    : "font-bold text-slate-600 hover:text-black"
+                    ? "border-2 border-black bg-neo-yellow font-extrabold text-black shadow-neo-sm"
+                    : "font-bold text-slate-600 [@media(hover:hover)]:hover:text-black"
                 )}
               >
                 {tab.icon}

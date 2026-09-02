@@ -25,6 +25,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { hashPin, verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
+import { parseBulanTahunQuery } from "@/lib/validation";
 import type { MemberDTO, MemberErrorResponse, PaymentStatus } from "@/lib/types";
 
 // noHp divalidasi longgar (non-empty) — format bebas, jangan over-validate;
@@ -69,22 +70,15 @@ function memberSnapshot(m: {
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
-  const bulanRaw = url.searchParams.get("bulan");
-  const tahunRaw = url.searchParams.get("tahun");
 
-  // Query bulan/tahun harus muncul berpasangan & valid; satu tanpa pasangan
-  // atau invalid → 400 (bukan diabaikan diam-diam).
-  let bulan: number | null = null;
-  let tahun: number | null = null;
-  if (bulanRaw !== null || tahunRaw !== null) {
-    const bulanOk = /^\d{1,2}$/.test(bulanRaw ?? "") && Number(bulanRaw) >= 1 && Number(bulanRaw) <= 12;
-    const tahunOk = /^\d{4}$/.test(tahunRaw ?? "");
-    if (!bulanOk || !tahunOk) {
-      return badRequest("Query bulan (1-12) dan tahun (4 digit) wajib valid");
-    }
-    bulan = Number(bulanRaw);
-    tahun = Number(tahunRaw);
+  // Query bulan/tahun harus muncul berpasangan & valid (lib/validation);
+  // satu tanpa pasangan atau invalid → 400 (bukan diabaikan diam-diam).
+  const periode = parseBulanTahunQuery(url.searchParams);
+  if (periode === "INVALID") {
+    return badRequest("Query bulan (1-12) dan tahun (4 digit) wajib valid");
   }
+  const bulan = periode?.bulan ?? null;
+  const tahun = periode?.tahun ?? null;
 
   // Deviasi: SEMUA anggota (aktif + nonaktif) dikembalikan — lihat header.
   const members = await prisma.member.findMany({ orderBy: { nama: "asc" } });

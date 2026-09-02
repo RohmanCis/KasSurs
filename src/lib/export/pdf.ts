@@ -6,12 +6,7 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import type { ReportSnapshotPayload } from "@/lib/types";
-
-// Nama bulan Indonesia — dipakai di judul & kolom Bulan/Tahun Iuran.
-const NAMA_BULAN = [
-  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
-];
+import { NAMA_BULAN } from "@/lib/format";
 
 /** Nominal Rupiah: 30000 → "Rp30.000" (locale id-ID, tanpa desimal). */
 function formatRupiah(nomor: number): string {

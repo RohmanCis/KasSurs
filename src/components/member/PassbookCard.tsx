@@ -1,5 +1,6 @@
 import { CheckCircle2, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { NAMA_BULAN_SINGKAT } from "@/lib/format";
 import type { PaymentDTO } from "@/lib/types";
 
 // PassbookCard — Buku Kas Digital anggota (subscreen-member).
@@ -16,11 +17,8 @@ export interface PassbookCardProps {
   "data-testid"?: string; // hook E2E Playwright (FASE-3 Langkah 3)
 }
 
-const NAMA_BULAN_SINGKAT = [
-  "JAN", "FEB", "MAR", "APR", "MEI", "JUN",
-  "JUL", "AGU", "SEP", "OKT", "NOV", "DES",
-] as const;
-
+// Varian UPPERCASE — beda dari NAMA_BULAN di lib/format (Title Case),
+// sengaja tidak digabung.
 const NAMA_BULAN_PANJANG = [
   "JANUARI", "FEBRUARI", "MARET", "APRIL", "MEI", "JUNI",
   "JULI", "AGUSTUS", "SEPTEMBER", "OKTOBER", "NOVEMBER", "DESEMBER",

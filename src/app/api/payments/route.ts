@@ -28,6 +28,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
+import { dateOnly, parseBulanTahunQuery } from "@/lib/validation";
 import type {
   PaymentDTO,
   PaymentConflictResponse,
@@ -36,20 +37,13 @@ import type {
 
 // Jumlah > 0 divalidasi di application layer (business rule Bagian 4) —
 // BUKAN DB constraint; nominal boleh beda dari 30000 (rapel/sumbangan).
+// tanggalBayar: dateOnly dari lib/validation (roundtrip guard gotcha #12).
 const createPaymentSchema = z.object({
   memberId: z.string().trim().min(1, "Member wajib diisi"),
   bulan: z.number().int().min(1, "Bulan harus 1-12").max(12, "Bulan harus 1-12"),
   tahun: z.number().int().min(1000, "Tahun harus 4 digit").max(9999, "Tahun harus 4 digit"),
   jumlah: z.number().int().positive("Jumlah harus lebih dari 0"),
-  tanggalBayar: z
-    .string()
-    .refine(
-      (s) =>
-        /^\d{4}-\d{2}-\d{2}$/.test(s) &&
-        !Number.isNaN(Date.parse(s)) &&
-        new Date(s).toISOString().slice(0, 10) === s,
-      "tanggalBayar harus tanggal ISO (YYYY-MM-DD)",
-    ),
+  tanggalBayar: dateOnly("tanggalBayar"),
 });
 
 function badRequest(message: string): NextResponse<PaymentInputErrorResponse> {
@@ -135,23 +129,16 @@ export async function GET(request: Request) {
   if (!session) return unauthorized();
 
   const url = new URL(request.url);
-  const bulanRaw = url.searchParams.get("bulan");
-  const tahunRaw = url.searchParams.get("tahun");
   const memberIdRaw = url.searchParams.get("memberId");
 
-  // Filter bulan/tahun harus muncul berpasangan & valid (pola T-16) — satu
-  // tanpa pasangan atau invalid → 400 (bukan diabaikan diam-diam).
-  let bulan: number | null = null;
-  let tahun: number | null = null;
-  if (bulanRaw !== null || tahunRaw !== null) {
-    const bulanOk = /^\d{1,2}$/.test(bulanRaw ?? "") && Number(bulanRaw) >= 1 && Number(bulanRaw) <= 12;
-    const tahunOk = /^\d{4}$/.test(tahunRaw ?? "");
-    if (!bulanOk || !tahunOk) {
-      return badRequest("Query bulan (1-12) dan tahun (4 digit) wajib valid");
-    }
-    bulan = Number(bulanRaw);
-    tahun = Number(tahunRaw);
+  // Filter bulan/tahun harus muncul berpasangan & valid (lib/validation) —
+  // satu tanpa pasangan atau invalid → 400 (bukan diabaikan diam-diam).
+  const periode = parseBulanTahunQuery(url.searchParams);
+  if (periode === "INVALID") {
+    return badRequest("Query bulan (1-12) dan tahun (4 digit) wajib valid");
   }
+  const bulan = periode?.bulan ?? null;
+  const tahun = periode?.tahun ?? null;
   const memberId = memberIdRaw && memberIdRaw.trim() !== "" ? memberIdRaw : null;
 
   // RBAC data-level (KRITIS): ANGGOTA hanya boleh lihat payment miliknya

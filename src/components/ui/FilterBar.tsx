@@ -19,16 +19,12 @@
 // =====================================================================
 
 import { useId } from "react";
+import { NAMA_BULAN } from "@/lib/format";
 import type { CategoryDTO } from "@/lib/types";
 
 // Dipindah dari StatusBadge.tsx (dihapus saat cleanup V1.0 — FASE-3 Langkah 4):
 // kontrak status filter, kini hidup di sini satu-satunya konsumennya.
 export type StatusBadgeStatus = "LUNAS" | "BELUM";
-
-const NAMA_BULAN = [
-  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
-];
 
 interface FilterBarProps {
   bulan: number; // 1-12

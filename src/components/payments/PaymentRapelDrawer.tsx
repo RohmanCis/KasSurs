@@ -12,6 +12,7 @@
 import { useState, type FormEvent } from "react";
 import { Drawer } from "vaul";
 import NeoButton from "@/components/ui/NeoButton";
+import { NAMA_BULAN, formatRibuan } from "@/lib/format";
 import type { MemberDTO } from "@/lib/types";
 
 export interface RapelInput {
@@ -30,15 +31,6 @@ interface PaymentRapelDrawerProps {
   defaultTanggal: string; // hari ini YYYY-MM-DD
   submitting: boolean;
   onSubmit: (input: RapelInput) => void;
-}
-
-const NAMA_BULAN = [
-  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
-];
-
-function formatRibuan(digits: string): string {
-  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 const labelClass = "mb-1 block text-[10px] font-extrabold uppercase tracking-wider text-black";

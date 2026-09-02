@@ -11,7 +11,13 @@ import { useState } from "react";
 import { LogOut } from "lucide-react";
 import NeoButton from "@/components/ui/NeoButton";
 
-export default function LogoutButton() {
+export interface LogoutButtonProps {
+  // Hook E2E/unit — default "logout-button"; halaman boleh override
+  // (mis. status member memakai "status-logout", FASE 3).
+  testId?: string;
+}
+
+export default function LogoutButton({ testId = "logout-button" }: LogoutButtonProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +36,7 @@ export default function LogoutButton() {
       size="sm"
       onClick={handleLogout}
       disabled={loading}
-      data-testid="logout-button"
+      data-testid={testId}
       // Tap target ≥44px (3-DESIGN §7) — override per-use; NeoButton size="sm"
       // global tidak diubah (masih dipakai konteks non-header).
       className="min-h-[44px] shrink-0 py-2"

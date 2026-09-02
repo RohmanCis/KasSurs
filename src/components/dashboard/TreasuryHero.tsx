@@ -64,7 +64,7 @@ export default function TreasuryHero({
         <div className="w-full h-3.5 bg-neo-gray border-2 border-black rounded-lg overflow-hidden p-0.5">
           <div
             className={cn(
-              "h-full bg-neo-green transition-all duration-300 rounded",
+              "h-full bg-neo-green transition-[width] duration-300 rounded",
               // Border kanan hanya saat terisi — di 0% jadi garis hitam yatim
               persen > 0 && "border-r-2 border-black"
             )}

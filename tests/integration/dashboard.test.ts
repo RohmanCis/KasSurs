@@ -144,7 +144,8 @@ function stateKey(s: FullState): string {
 // Expected dihitung dari snapshot dgn SEMANTIK SAMA persis route (saldo =
 // Σ payment − Σ expense semua waktu; bulan ini = kolom bulan/tahun utk
 // Payment, rentang tanggal utk Expense; jumlahBelumBayar = aktif − aktif
-// yg sudah bayar bulan ini, distinct memberId).
+// yg sudah bayar bulan ini, distinct memberId; jumlahAnggotaAktif = aktif;
+// jumlahLunas = aktif yg sudah bayar bulan ini — FASE 1 2026-09-03, aditif).
 function expectedFrom(s: FullState) {
   const payAll = s.payments.reduce((a, p) => a + p.jumlah, 0);
   const expAll = s.expenses.reduce((a, e) => a + e.jumlah, 0);
@@ -164,6 +165,8 @@ function expectedFrom(s: FullState) {
     totalMasukBulanIni: payCur,
     totalKeluarBulanIni: expCur,
     jumlahBelumBayar: s.activeMemberIds.length - paidActiveCur,
+    jumlahAnggotaAktif: s.activeMemberIds.length,
+    jumlahLunas: paidActiveCur,
   };
 }
 
@@ -271,7 +274,7 @@ describe("GET /api/dashboard/summary", () => {
     await setSession(adminId, "ADMIN");
   });
 
-  it("ADMIN → 200 exact 4 field; saldo negatif (expense>payment); rapel bulan lalu tidak masuk; payment m4 NONAKTIF tidak mengurangi jumlahBelumBayar", async () => {
+  it("ADMIN → 200 exact 6 field; saldo negatif (expense>payment); rapel bulan lalu tidak masuk; payment m4 NONAKTIF tidak mengurangi jumlahBelumBayar", async () => {
     const { body, expected } = await stableSummary("ADMIN");
 
     // Exact — semua field sekaligus (saldo, masuk, keluar, belum bayar),
@@ -304,6 +307,11 @@ describe("GET /api/dashboard/summary", () => {
       totalKeluarBulanIni: a.expected.totalKeluarBulanIni,
     });
     expect(a.body).not.toHaveProperty("jumlahBelumBayar");
+    // Lock intent (MINOR 2): field aggregate dikirim untuk KEDUA role
+    // (FR-14 transparansi) — kalau route meng-gate admin-only, assert ini
+    // merah, bukan false-negative.
+    expect(a.body).toHaveProperty("jumlahLunas");
+    expect(a.body).toHaveProperty("jumlahAnggotaAktif");
 
     // Konsistensi lintas role: sama data, organisasi-wide (bukan difilter
     // member) → angka identik (dua GET dalam SATU window stabil).

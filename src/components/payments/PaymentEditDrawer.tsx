@@ -14,6 +14,7 @@ import { useState, type FormEvent } from "react";
 import { Drawer } from "vaul";
 import { Pencil, Trash2 } from "lucide-react";
 import NeoButton from "@/components/ui/NeoButton";
+import { NAMA_BULAN, formatRibuan, formatRupiah } from "@/lib/format";
 import type { PaymentDTO, UpdatePaymentRequest } from "@/lib/types";
 
 interface PaymentEditDrawerProps {
@@ -26,19 +27,6 @@ interface PaymentEditDrawerProps {
 }
 
 type Mode = "detail" | "edit" | "confirm-delete";
-
-const NAMA_BULAN = [
-  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
-];
-
-function formatRupiah(n: number): string {
-  return `Rp ${n.toLocaleString("id-ID")}`;
-}
-
-function formatRibuan(digits: string): string {
-  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-}
 
 const labelClass = "mb-1 block text-[10px] font-extrabold uppercase tracking-wider text-black";
 const inputClass =

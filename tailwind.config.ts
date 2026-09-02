@@ -44,9 +44,10 @@ const config: Config = {
         "3": "3px",
       },
       // Typography — Bricolage Grotesque via next/font (3-DESIGN.md V2.2 Bagian 3)
+      // JetBrains Mono dihapus 2026-09-03 (mobile perf: ~25KB untuk 1 badge) — mono fallback ke monospace generic.
       fontFamily: {
         sans: ["var(--font-bricolage)", "system-ui", "sans-serif"],
-        mono: ["var(--font-jetbrains-mono)", "monospace"],
+        mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       // Skala ukuran sesuai 3-DESIGN.md: sm 14, base 16, lg 20, 2xl 28
       fontSize: {

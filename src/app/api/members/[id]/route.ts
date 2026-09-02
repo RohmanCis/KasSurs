@@ -24,21 +24,22 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { hashPin, verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
+import { minimalSatuField } from "@/lib/validation";
 import type { MemberDTO, MemberErrorResponse } from "@/lib/types";
 
 // Validasi field sama T-16 (nama/noHp non-empty, pin 4-6 digit) — semua
-// opsional; refine menjamin minimal satu field diisi (body {} → 400).
+// opsional; minimalSatuField menjamin minimal satu field diisi (body {} → 400).
 // statusAktif: QA #3 (2026-09-01) — reaktivasi anggota nonaktif (true).
 // false DITOLAK di sini: penonaktifan punya logika khusus last-admin
 // guard di endpoint deactivate — jangan bisa dilewati via PATCH.
-const updateMemberSchema = z
-  .object({
+const updateMemberSchema = minimalSatuField(
+  z.object({
     nama: z.string().trim().min(1, "Nama wajib diisi").optional(),
     noHp: z.string().trim().min(1, "No HP wajib diisi").optional(),
     pin: z.string().regex(/^\d{4,6}$/, "PIN harus 4-6 digit angka").optional(),
     statusAktif: z.literal(true, { message: "Penonaktifkan anggota lewat tombol Nonaktifkan" }).optional(),
-  })
-  .refine((v) => Object.keys(v).length > 0, "Minimal satu field wajib diisi");
+  }),
+);
 
 function badRequest(message: string): NextResponse<MemberErrorResponse> {
   return NextResponse.json({ error: "INVALID_INPUT", message }, { status: 400 });

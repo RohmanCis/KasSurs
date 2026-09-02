@@ -20,7 +20,7 @@ export default function LoginPage() {
           <Coins className="h-7 w-7 stroke-[2.5] text-black" aria-hidden="true" />
         </div>
         <h1 className="text-2xl font-extrabold tracking-tight text-black">KasSurs.</h1>
-        <p className="mt-0.5 text-xs font-semibold text-slate-700">
+        <p className="mt-0.5 text-xs font-bold text-slate-700">
           Sistem Kas Organisasi — masuk dengan nomor HP dan PIN kamu.
         </p>
       </div>

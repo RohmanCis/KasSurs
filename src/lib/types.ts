@@ -224,6 +224,11 @@ export interface DashboardSummaryResponse {
   totalKeluarBulanIni: number;
   // hanya terisi untuk role ADMIN:
   jumlahBelumBayar?: number;
+  // FASE 1 (2026-09-03): dihitung server-side dari data yang sudah di-query
+  // route — dashboard tidak lagi fetch /api/members. Additive terhadap
+  // kontrak Tech Spec (jumlahBelumBayar tetap optional admin-only).
+  jumlahAnggotaAktif: number; // member statusAktif=true
+  jumlahLunas: number; // jumlah anggota AKTIF yang sudah lunas bulan berjalan
 }
 
 // ===== Report Snapshot (FR-23 — payload beku saat export pertama periode) =====

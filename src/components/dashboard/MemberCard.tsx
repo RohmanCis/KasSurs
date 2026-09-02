@@ -27,7 +27,7 @@ export interface MemberCardProps {
 const LONG_PRESS_MS = 450;
 const MOVE_TOLERANCE_PX = 10;
 
-export default function MemberCard({
+function MemberCard({
   member,
   isNew = false,
   isPending = false,
@@ -125,11 +125,11 @@ export default function MemberCard({
       onKeyDown={handleKeyDown}
       onContextMenu={(e) => e.preventDefault()}
       className={cn(
-        "p-2.5 h-[72px] flex flex-col justify-between cursor-pointer border-[2.5px] border-black rounded-[14px] transition-all duration-[120ms] select-none [touch-action:manipulation] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black",
+        "p-2.5 h-[72px] flex flex-col justify-between cursor-pointer border-[2.5px] border-black rounded-[14px] transition-[transform,box-shadow,background-color,color] duration-[120ms] select-none [touch-action:manipulation] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black",
         "active:translate-x-[2.5px] active:translate-y-[2.5px] active:shadow-none",
         lunas
           ? "bg-neo-green text-black shadow-neo-sm"
-          : "bg-white text-black shadow-neo hover:bg-neo-yellow",
+          : "bg-white text-black shadow-neo [@media(hover:hover)]:hover:bg-neo-yellow",
         isPending && "opacity-70 pointer-events-none",
         className
       )}
@@ -140,7 +140,7 @@ export default function MemberCard({
           {member.nama}
         </span>
         {isNew && (
-          <span className="pointer-events-none bg-neo-yellow border-1.5 border-black rounded px-1 text-[9px] font-black uppercase shadow-neo-sm shrink-0">
+          <span className="pointer-events-none bg-neo-yellow border-1.5 border-black rounded px-1 text-[9px] font-extrabold uppercase shadow-neo-sm shrink-0">
             BARU
           </span>
         )}
@@ -184,3 +184,10 @@ export default function MemberCard({
     </div>
   );
 }
+
+// FASE 2 (memo): roster di /pembayaran re-render per keystroke search/filter
+// — memo memblokir re-render kartu bila props-nya tak berubah (butuh handler
+// konsumen stabil via useCallback, lihat pembayaran/page.tsx).
+const MemoizedMemberCard = React.memo(MemberCard);
+
+export default MemoizedMemberCard;

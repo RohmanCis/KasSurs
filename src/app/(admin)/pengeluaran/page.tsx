@@ -20,24 +20,7 @@ import BottomNav from "@/components/layout/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
 import NeoButton from "@/components/ui/NeoButton";
 import type { CategoryDTO, ExpenseDTO } from "@/lib/types";
-
-const NAMA_BULAN = [
-  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
-];
-
-function formatRupiah(n: number): string {
-  return `Rp ${n.toLocaleString("id-ID")}`;
-}
-
-// "30 Agu" — ringkas untuk list (tahun di-header periode sudah jelas).
-function formatTanggal(iso: string): string {
-  const d = new Date(`${iso}T00:00:00`); // parse sebagai lokal, bukan UTC
-  return new Intl.DateTimeFormat("id-ID", {
-    day: "numeric",
-    month: "short",
-  }).format(d);
-}
+import { NAMA_BULAN, formatRupiah, formatTanggal } from "@/lib/format";
 
 // Gaya tombol aksi toast sonner (Toaster unstyled — styling per-toast).
 const NEO_ACTION_STYLE: CSSProperties = {
@@ -138,6 +121,9 @@ export default function PengeluaranPage() {
   }
 
   function handleError(pesan: string, retry: (() => void) | null) {
+    // FASE 2: tutup toast persist lama (sukses/error sebelumnya) dulu —
+    // error baru tidak menumpuk di atas toast lama.
+    toast.dismiss();
     toast.error(pesan, {
       duration: Infinity,
       action: retry

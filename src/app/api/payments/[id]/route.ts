@@ -32,6 +32,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
+import { dateOnly, minimalSatuField } from "@/lib/validation";
 import type {
   DeletePaymentResponse,
   PaymentConflictResponse,
@@ -40,29 +41,18 @@ import type {
 } from "@/lib/types";
 
 // Validasi sama T-20 (jumlah > 0 di application layer, bulan 1-12, tahun 4
-// digit, tanggalBayar date-only) — semua opsional; refine menjamin minimal
-// satu field diisi (body {} → 400). memberId sengaja TIDAK ada di skema:
-// unknown key di-strip Zod default, jadi field memberId di body diabaikan
-// (keputusan didokumentasikan di types.ts UpdatePaymentRequest).
-const updatePaymentSchema = z
-  .object({
+// digit, tanggalBayar date-only) — semua opsional; minimalSatuField menjamin
+// minimal satu field diisi (body {} → 400). memberId sengaja TIDAK ada di
+// skema: unknown key di-strip Zod default, jadi field memberId di body
+// diabaikan (keputusan didokumentasikan di types.ts UpdatePaymentRequest).
+const updatePaymentSchema = minimalSatuField(
+  z.object({
     jumlah: z.number().int().positive("Jumlah harus lebih dari 0").optional(),
-    tanggalBayar: z
-      .string()
-      .refine(
-        // Roundtrip check menangkap rollover senyap ("2026-02-30" → Mar 2) —
-        // backport fix oracle T-24 (regex+NaN saja tidak cukup di V8).
-        (s) =>
-          /^\d{4}-\d{2}-\d{2}$/.test(s) &&
-          !Number.isNaN(Date.parse(s)) &&
-          new Date(s).toISOString().slice(0, 10) === s,
-        "tanggalBayar harus tanggal ISO (YYYY-MM-DD)",
-      )
-      .optional(),
+    tanggalBayar: dateOnly("tanggalBayar").optional(),
     bulan: z.number().int().min(1, "Bulan harus 1-12").max(12, "Bulan harus 1-12").optional(),
     tahun: z.number().int().min(1000, "Tahun harus 4 digit").max(9999, "Tahun harus 4 digit").optional(),
-  })
-  .refine((v) => Object.keys(v).length > 0, "Minimal satu field wajib diisi");
+  }),
+);
 
 function badRequest(message: string): NextResponse<PaymentItemErrorResponse> {
   return NextResponse.json({ error: "INVALID_INPUT", message }, { status: 400 });

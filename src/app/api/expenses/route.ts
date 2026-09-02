@@ -28,28 +28,19 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { verifySession, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { recordAuditLog } from "@/lib/audit";
+import { dateOnly, parseBulanTahunQuery } from "@/lib/validation";
 import type { ExpenseDTO, ExpenseErrorResponse } from "@/lib/types";
 
 // deskripsi: trim min 1, TANPA max — konsisten dengan pola string lain di
 // repo (members.nama/noHp juga tanpa max). jumlah > 0 di application layer
 // (business rule FR-10), bukan DB constraint — nominal bebas (rapel/sumbangan).
-// tanggal: date-only YYYY-MM-DD (keputusan T-20). Roundtrip check ketiga
-// menangkap rollover kalender — Date.parse("2026-02-30") TIDAK NaN di V8
-// (silent rollover → Mar 2); regex+NaN tetap sebagai guard agar new Date(s)
-// tidak throw RangeError untuk string aneh (fix oracle review T-24).
+// tanggal: dateOnly dari lib/validation (keputusan T-20, roundtrip guard
+// gotcha #12 — "2026-02-30" ditolak, bukan silent rollover).
 const createExpenseSchema = z.object({
   categoryId: z.string().trim().min(1, "Kategori wajib diisi"),
   deskripsi: z.string().trim().min(1, "Deskripsi wajib diisi"),
   jumlah: z.number().int().positive("Jumlah harus lebih dari 0"),
-  tanggal: z
-    .string()
-    .refine(
-      (s) =>
-        /^\d{4}-\d{2}-\d{2}$/.test(s) &&
-        !Number.isNaN(Date.parse(s)) &&
-        new Date(s).toISOString().slice(0, 10) === s,
-      "tanggal harus tanggal ISO (YYYY-MM-DD)",
-    ),
+  tanggal: dateOnly("tanggal"),
 });
 
 function badRequest(message: string): NextResponse<ExpenseErrorResponse> {
@@ -122,20 +113,16 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const categoryIdRaw = url.searchParams.get("categoryId");
-  const bulanRaw = url.searchParams.get("bulan");
-  const tahunRaw = url.searchParams.get("tahun");
 
-  // Filter bulan/tahun harus muncul berpasangan & valid (pola T-16/T-20) —
+  // Filter bulan/tahun harus muncul berpasangan & valid (lib/validation) —
   // satu tanpa pasangan atau invalid → 400 (bukan diabaikan diam-diam).
   let dateRange: { gte: Date; lt: Date } | null = null;
-  if (bulanRaw !== null || tahunRaw !== null) {
-    const bulanOk = /^\d{1,2}$/.test(bulanRaw ?? "") && Number(bulanRaw) >= 1 && Number(bulanRaw) <= 12;
-    const tahunOk = /^\d{4}$/.test(tahunRaw ?? "");
-    if (!bulanOk || !tahunOk) {
-      return badRequest("Query bulan (1-12) dan tahun (4 digit) wajib valid");
-    }
-    const bulan = Number(bulanRaw);
-    const tahun = Number(tahunRaw);
+  const periode = parseBulanTahunQuery(url.searchParams);
+  if (periode === "INVALID") {
+    return badRequest("Query bulan (1-12) dan tahun (4 digit) wajib valid");
+  }
+  if (periode) {
+    const { bulan, tahun } = periode;
     // Expense.tanggal disimpan sebagai UTC midnight (new Date("YYYY-MM-DD"))
     // → rentang [awal bulan, awal bulan berikutnya) cocok, tanpa isu timezone.
     dateRange = { gte: new Date(Date.UTC(tahun, bulan - 1, 1)), lt: new Date(Date.UTC(tahun, bulan, 1)) };

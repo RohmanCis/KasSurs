@@ -6,12 +6,7 @@
 // =====================================================================
 import * as XLSX from "xlsx";
 import type { ReportSnapshotPayload } from "@/lib/types";
-
-// Nama bulan Indonesia — dipakai di judul sheet Ringkasan.
-const NAMA_BULAN = [
-  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
-];
+import { NAMA_BULAN } from "@/lib/format";
 
 export function generateReportExcel(payload: ReportSnapshotPayload): Buffer {
   const { periode, ringkasan } = payload;

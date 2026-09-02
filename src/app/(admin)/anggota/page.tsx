@@ -26,15 +26,11 @@ import BottomNav from "@/components/layout/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
 import NeoButton from "@/components/ui/NeoButton";
 import { cn } from "@/lib/utils";
+import { NAMA_BULAN } from "@/lib/format";
 import type {
   MemberDTO,
   MemberDeactivateErrorResponse,
 } from "@/lib/types";
-
-const NAMA_BULAN = [
-  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-  "Juli", "Agustus", "September", "Oktober", "November", "Desember",
-];
 
 // Panel yang tampil saat row di-expand.
 type PanelState = "aksi" | "edit" | "konfirmasi";
@@ -260,14 +256,14 @@ export default function AnggotaPage() {
             onClick={() => geserPeriode(-1)}
             aria-label="Bulan sebelumnya"
             data-testid="anggota-periode-prev"
-            className="flex h-11 w-11 items-center justify-center rounded-xl border-[2.5px] border-black bg-white shadow-neo-sm transition-all duration-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+            className="flex h-11 w-11 items-center justify-center rounded-xl border-[2.5px] border-black bg-white shadow-neo-sm transition-[transform,box-shadow,background-color,color] duration-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
           >
             <ChevronLeft className="h-4 w-4 stroke-[3]" aria-hidden="true" />
           </button>
           <p className="text-center text-xs font-extrabold uppercase text-black">
             {NAMA_BULAN[bulan - 1]} <span className="tabular-nums">{tahun}</span>
             {isPeriodeIni && (
-              <span className="ml-1.5 rounded border border-black bg-neo-yellow px-1 text-[9px] font-black">
+              <span className="ml-1.5 rounded border border-black bg-neo-yellow px-1 text-[9px] font-extrabold">
                 BULAN INI
               </span>
             )}
@@ -278,7 +274,7 @@ export default function AnggotaPage() {
             disabled={isPeriodeIni}
             aria-label="Bulan berikutnya"
             data-testid="anggota-periode-next"
-            className="flex h-11 w-11 items-center justify-center rounded-xl border-[2.5px] border-black bg-white shadow-neo-sm transition-all duration-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:translate-x-[2px] disabled:translate-y-[2px] disabled:bg-neo-gray disabled:text-slate-400 disabled:shadow-none"
+            className="flex h-11 w-11 items-center justify-center rounded-xl border-[2.5px] border-black bg-white shadow-neo-sm transition-[transform,box-shadow,background-color,color] duration-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:translate-x-[2px] disabled:translate-y-[2px] disabled:bg-neo-gray disabled:text-slate-400 disabled:shadow-none"
           >
             <ChevronRight className="h-4 w-4 stroke-[3]" aria-hidden="true" />
           </button>
@@ -433,7 +429,7 @@ export default function AnggotaPage() {
                     // rounded (xl 12px − border 2px = 10px) agar inset ring
                     // sejajar tepi kartu, bukan persegi di dalam kartu.
                     // focus-visible (bukan focus): klik mouse tak menyalakan ring.
-                    className="flex w-full items-center justify-between gap-3 rounded-[10px] px-3 py-2.5 text-left transition-all duration-100 active:translate-x-[2px] active:translate-y-[2px] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black"
+                    className="flex w-full items-center justify-between gap-3 rounded-[10px] px-3 py-2.5 text-left transition-[transform,box-shadow,background-color,color] duration-100 active:translate-x-[2px] active:translate-y-[2px] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black"
                   >
                     <span className="min-w-0">
                       <span className="flex flex-wrap items-center gap-1.5">
@@ -441,12 +437,12 @@ export default function AnggotaPage() {
                           {m.nama}
                         </span>
                         {m.role === "ADMIN" && (
-                          <span className="rounded border border-black bg-neo-yellow px-1.5 py-0.5 text-[9px] font-black uppercase">
+                          <span className="rounded border border-black bg-neo-yellow px-1.5 py-0.5 text-[9px] font-extrabold uppercase">
                             Admin
                           </span>
                         )}
                         {!m.statusAktif && (
-                          <span className="rounded border border-black bg-neo-gray px-1.5 py-0.5 text-[9px] font-black uppercase text-slate-500">
+                          <span className="rounded border border-black bg-neo-gray px-1.5 py-0.5 text-[9px] font-extrabold uppercase text-slate-500">
                             Nonaktif
                           </span>
                         )}
@@ -458,7 +454,7 @@ export default function AnggotaPage() {
                     {m.statusAktif && (
                       <span
                         className={cn(
-                          "shrink-0 rounded border-1.5 border-black px-1.5 py-0.5 text-[9px] font-black uppercase shadow-neo-sm",
+                          "shrink-0 rounded border-1.5 border-black px-1.5 py-0.5 text-[9px] font-extrabold uppercase shadow-neo-sm",
                           lunas ? "bg-neo-green text-black" : "bg-neo-coral text-black"
                         )}
                       >
