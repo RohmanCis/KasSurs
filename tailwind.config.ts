@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 const config: Config = {
   content: [
@@ -58,7 +59,21 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    plugin(({ addComponents }) => {
+      addComponents({
+        // Neo-Brutalism press-down — konsolidasi blob duplikat 13 site (review 2026-09-03).
+        // 3 varian offset: 3.5px default, 2.5px (MemberCard), 2px (nav/tombol kecil).
+        ".neo-press": {
+          transitionProperty: "transform, box-shadow, background-color, color",
+          transitionDuration: "100ms",
+          "&:active": { transform: "translate(3.5px, 3.5px)", boxShadow: "none" },
+        },
+        ".neo-press-md": { "&:active": { transform: "translate(2.5px, 2.5px)" } },
+        ".neo-press-sm": { "&:active": { transform: "translate(2px, 2px)" } },
+      });
+    }),
+  ],
 };
 
 export default config;

@@ -49,15 +49,15 @@ export function paymentNotFound(): NextResponse {
   );
 }
 
-// 409 kontrak EXACT PaymentConflictResponse. existingPaymentId disertakan
-// hanya jika argumen diberikan — call site race selalu mengirim id (atau ""
-// jika re-query keburu hilang), path lain bisa omit.
-export function alreadyPaid(existingPaymentId?: string): NextResponse {
+// 409 kontrak EXACT PaymentConflictResponse. existingPaymentId selalu
+// disertakan — seluruh call site (payments + payments/[id]) mengirim id
+// (atau "" jika re-query keburu hilang).
+export function alreadyPaid(existingPaymentId: string): NextResponse {
   return NextResponse.json(
     {
       error: "ALREADY_PAID",
       message: "Sudah lunas bulan ini",
-      ...(existingPaymentId !== undefined ? { existingPaymentId } : {}),
+      existingPaymentId,
     },
     { status: 409 },
   );

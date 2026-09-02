@@ -473,7 +473,7 @@ export default function PembayaranPage() {
             onClick={() => setFilter("semua")}
             data-testid="chip-filter-semua"
             className={cn(
-              "inline-flex min-h-[44px] items-center rounded-xl border-[2.5px] border-black px-2.5 py-1 text-[10px] shadow-neo transition-[transform,box-shadow,background-color,color] duration-100 select-none active:translate-x-[3.5px] active:translate-y-[3.5px] active:shadow-none",
+              "inline-flex min-h-[44px] items-center rounded-xl border-[2.5px] border-black px-2.5 py-1 text-[10px] shadow-neo neo-press select-none",
               filter === "semua" ? "bg-black font-extrabold text-white" : "bg-white font-bold text-black"
             )}
           >
@@ -484,7 +484,7 @@ export default function PembayaranPage() {
             onClick={() => setFilter("belum")}
             data-testid="chip-filter-belum"
             className={cn(
-              "inline-flex min-h-[44px] items-center rounded-xl border-[2.5px] border-black px-2.5 py-1 text-[10px] shadow-neo transition-[transform,box-shadow,background-color,color] duration-100 select-none active:translate-x-[3.5px] active:translate-y-[3.5px] active:shadow-none",
+              "inline-flex min-h-[44px] items-center rounded-xl border-[2.5px] border-black px-2.5 py-1 text-[10px] shadow-neo neo-press select-none",
               filter === "belum" ? "bg-black font-extrabold text-white" : "bg-neo-coral font-bold text-black"
             )}
           >

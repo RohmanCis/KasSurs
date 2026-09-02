@@ -13,7 +13,7 @@ export default function NotFound() {
         </p>
         <Link
           href="/"
-          className="block w-full border-[2.5px] border-black rounded-xl font-bold text-base px-3.5 py-3.5 bg-neo-yellow text-black shadow-neo transition-[transform,box-shadow] duration-100 select-none active:translate-x-[3.5px] active:translate-y-[3.5px] active:shadow-none [@media(hover:hover)]:hover:-translate-x-px [@media(hover:hover)]:hover:-translate-y-px"
+          className="block w-full border-[2.5px] border-black rounded-xl font-bold text-base px-3.5 py-3.5 bg-neo-yellow text-black shadow-neo neo-press select-none [@media(hover:hover)]:hover:-translate-x-px [@media(hover:hover)]:hover:-translate-y-px"
         >
           Kembali ke Beranda
         </Link>

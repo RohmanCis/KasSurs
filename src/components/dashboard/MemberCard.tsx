@@ -125,8 +125,7 @@ function MemberCard({
       onKeyDown={handleKeyDown}
       onContextMenu={(e) => e.preventDefault()}
       className={cn(
-        "p-2.5 h-[72px] flex flex-col justify-between cursor-pointer border-[2.5px] border-black rounded-[14px] transition-[transform,box-shadow,background-color,color] duration-[120ms] select-none [touch-action:manipulation] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black",
-        "active:translate-x-[2.5px] active:translate-y-[2.5px] active:shadow-none",
+        "p-2.5 h-[72px] flex flex-col justify-between cursor-pointer border-[2.5px] border-black rounded-[14px] neo-press neo-press-md select-none [touch-action:manipulation] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black",
         lunas
           ? "bg-neo-green text-black shadow-neo-sm"
           : "bg-white text-black shadow-neo [@media(hover:hover)]:hover:bg-neo-yellow",

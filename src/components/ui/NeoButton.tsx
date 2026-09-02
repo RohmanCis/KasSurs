@@ -71,8 +71,7 @@ const NeoButton = React.forwardRef<HTMLButtonElement, NeoButtonProps>(
         disabled={disabled}
         onClick={handleClick}
         className={cn(
-          "border-[2.5px] border-black rounded-xl font-bold shadow-neo transition-[transform,box-shadow,background-color,color] duration-100 select-none",
-          "active:translate-x-[3.5px] active:translate-y-[3.5px] active:shadow-none",
+          "border-[2.5px] border-black rounded-xl font-bold shadow-neo neo-press select-none",
           // Hover lift hanya utk device hover-capable — sentuh tidak
           // meninggalkan state hover menempel (FASE 2).
           "[@media(hover:hover)]:hover:-translate-x-px [@media(hover:hover)]:hover:-translate-y-px",

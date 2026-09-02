@@ -256,7 +256,7 @@ export default function AnggotaPage() {
             onClick={() => geserPeriode(-1)}
             aria-label="Bulan sebelumnya"
             data-testid="anggota-periode-prev"
-            className="flex h-11 w-11 items-center justify-center rounded-xl border-[2.5px] border-black bg-white shadow-neo-sm transition-[transform,box-shadow,background-color,color] duration-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+            className="flex h-11 w-11 items-center justify-center rounded-xl border-[2.5px] border-black bg-white shadow-neo-sm neo-press neo-press-sm"
           >
             <ChevronLeft className="h-4 w-4 stroke-[3]" aria-hidden="true" />
           </button>
@@ -274,7 +274,7 @@ export default function AnggotaPage() {
             disabled={isPeriodeIni}
             aria-label="Bulan berikutnya"
             data-testid="anggota-periode-next"
-            className="flex h-11 w-11 items-center justify-center rounded-xl border-[2.5px] border-black bg-white shadow-neo-sm transition-[transform,box-shadow,background-color,color] duration-100 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none disabled:translate-x-[2px] disabled:translate-y-[2px] disabled:bg-neo-gray disabled:text-slate-400 disabled:shadow-none"
+            className="flex h-11 w-11 items-center justify-center rounded-xl border-[2.5px] border-black bg-white shadow-neo-sm neo-press neo-press-sm disabled:translate-x-[2px] disabled:translate-y-[2px] disabled:bg-neo-gray disabled:text-slate-400 disabled:shadow-none"
           >
             <ChevronRight className="h-4 w-4 stroke-[3]" aria-hidden="true" />
           </button>
@@ -429,7 +429,7 @@ export default function AnggotaPage() {
                     // rounded (xl 12px − border 2px = 10px) agar inset ring
                     // sejajar tepi kartu, bukan persegi di dalam kartu.
                     // focus-visible (bukan focus): klik mouse tak menyalakan ring.
-                    className="flex w-full items-center justify-between gap-3 rounded-[10px] px-3 py-2.5 text-left transition-[transform,box-shadow,background-color,color] duration-100 active:translate-x-[2px] active:translate-y-[2px] focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black"
+                    className="flex w-full items-center justify-between gap-3 rounded-[10px] px-3 py-2.5 text-left neo-press neo-press-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black"
                   >
                     <span className="min-w-0">
                       <span className="flex flex-wrap items-center gap-1.5">

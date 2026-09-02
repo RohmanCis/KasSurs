@@ -66,7 +66,7 @@ export default async function DashboardPage() {
           <Link
             href="/pembayaran"
             data-testid="card-belum-bayar"
-            className="flex items-center justify-between gap-3 rounded-xl border-[2.5px] border-black bg-neo-coral px-3.5 py-3 shadow-neo transition-[transform,box-shadow,background-color,color] duration-100 active:translate-x-[3.5px] active:translate-y-[3.5px] active:shadow-none"
+            className="flex items-center justify-between gap-3 rounded-xl border-[2.5px] border-black bg-neo-coral px-3.5 py-3 shadow-neo neo-press"
           >
             <div>
               <p className="text-[10px] font-extrabold uppercase tracking-wider text-black">

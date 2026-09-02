@@ -62,7 +62,7 @@ export default function LaporanPage() {
   // 2 kolom ikon+teks, tapi tetap resep neo-btn press-down penuh).
   const exportCardBase =
     "flex w-full items-center justify-between rounded-xl border-[2.5px] border-black p-3 text-left shadow-neo " +
-    "transition-[transform,box-shadow,background-color,color] duration-100 select-none active:translate-x-[3.5px] active:translate-y-[3.5px] active:shadow-none " +
+    "neo-press select-none " +
     "disabled:translate-x-[3.5px] disabled:translate-y-[3.5px] disabled:bg-neo-gray disabled:shadow-none disabled:cursor-not-allowed";
 
   return (

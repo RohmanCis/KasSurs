@@ -545,7 +545,7 @@ interface AuditLogEntry {
 - Validasi input di setiap API route (misal dengan Zod) — cegah data tidak valid masuk ke database (No HP kosong, jumlah negatif, dll.).
 - **Audit log append-only** — tidak ada endpoint DELETE/PATCH untuk tabel `audit_logs`, memastikan jejak perubahan data keuangan tidak bisa dimanipulasi.
 - HTTPS wajib — otomatis disediakan oleh Vercel untuk semua deployment.
-- Security headers di `next.config.js` (FASE 1, 2026-09-03, terverifikasi live): `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, HSTS, `Referrer-Policy`, `Permissions-Policy`, `X-DNS-Prefetch-Control` + `poweredByHeader: false` + `reactStrictMode: true`. **CSP sengaja tidak disertakan** (butuh nonce — kompleksitas tak sebanding untuk V1).
+- Security headers di `next.config.js` (FASE 1, 2026-09-03; X-DNS-Prefetch-Control dihapus 2026-09-03 karena no-op di HTTP/2): `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, HSTS, `Referrer-Policy`, `Permissions-Policy` + `poweredByHeader: false` + `reactStrictMode: true`. **CSP sengaja tidak disertakan** (butuh nonce — kompleksitas tak sebanding untuk V1).
 - Environment variable (`DATABASE_URL`, `JWT_SECRET`) disimpan di Vercel Environment Variables, tidak pernah di-commit ke repo.
 
 ### Performa
