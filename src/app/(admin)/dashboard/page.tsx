@@ -69,11 +69,11 @@ export default async function DashboardPage() {
             className="flex items-center justify-between gap-3 rounded-xl border-[2.5px] border-black bg-neo-coral px-3.5 py-3 shadow-neo neo-press"
           >
             <div>
-              <p className="text-[10px] font-extrabold uppercase tracking-wider text-black">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-neo-darkred">
                 Belum Bayar {NAMA_BULAN[bulan - 1]}
               </p>
-              <p className="text-sm font-bold text-black">
-                <span className="text-xl font-extrabold tabular-nums text-neo-darkred">
+              <p className="mt-0.5 text-base font-extrabold text-black">
+                <span className="font-mono text-2xl font-extrabold tabular-nums text-neo-darkred">
                   {summary.jumlahBelumBayar}
                 </span>{" "}
                 anggota perlu ditagih

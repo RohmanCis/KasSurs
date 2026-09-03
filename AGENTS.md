@@ -124,11 +124,11 @@ Status: T-01 s.d. T-37 + Modul R + design-review batch fix SEMUA DONE. Sisa T-38
 
 ## Progress
 
-Update terakhir: 2026-09-03 — Mobile perf QA + FASE 1-3 eksekusi + deepening #3/#4 + API Handler Kit #1 + audit dokumen + **code review menyeluruh 2-axis (Standards+Spec, diff db3e822→HEAD) + fix batch**. Detail state, keputusan & history: `.agents/HANDOFF.md`.
+Update terakhir: 2026-09-03 — Mobile perf QA + FASE 1-3 eksekusi + deepening #3/#4 + API Handler Kit #1 + audit dokumen + **code review menyeluruh 2-axis (Standards+Spec, diff db3e822→HEAD) + fix batch** + **UI polish & perf batch** (optimizePackageImports lucide-react, FilterBar chevron, kategori grid 2-col + dot — amendemen FR-09, BottomNav py-2, dynamic import drawer). Detail state, keputusan & history: `.agents/HANDOFF.md`.
 
 - **Done:** T-01 s.d. T-37 + Modul R (UI V2.2) + design review fix + QA manual fix + **deepening #3/#4 (2026-09-03)**: `src/lib/format.ts` (satu sumber NAMA_BULAN/formatRupiah/todayISO WIB-safe — 11 file konsumen) + `src/lib/validation.ts` (dateOnly/minimalSatuField/parseBulanTahunQuery — 6 route handler); 23 unit test baru + **FASE 1/2/3 + error/not-found (2026-09-03)** + **API Handler Kit #1 (2026-09-03)**: `src/lib/api/{respond,session}.ts` + `src/lib/dto/{payment,expense,member,category}.ts` — 11/13 route migrasi, ±450 baris boilerplate dihapus, kontrak byte-identik. Verifikasi terakhir: tsc clean, vitest **161/161** (29 files). E2E 10/10 (4 spec, terakhir 2026-09-03). JetBrains Mono dihapus (badge login pakai `tabular-nums` + generic mono stack).
 - **Next:** T-38–T-39 Deployment (Vercel env vars + `prisma migrate deploy` + `prisma db seed`). Kandidat #2 useApiData NO-GO (ROI eval 2026-09-03 — lihat HANDOFF.md); kandidat arsitektur deepening #1–#4 semua selesai/ditutup. Plan lengkap: HANDOFF.md §4.
-- **Design doc:** `.agents/3-DESIGN.md` sinkron amendemen 2026-09-02 — mockup ground truth KECUALI amendemen bertanggal.
+- **Design doc:** `.agents/3-DESIGN.md` sinkron amendemen 2026-09-02 + 2026-09-03 (FilterBar chevron §5.6, kategori grid 2-col + dot §5.10, BottomNav/44px §7) — mockup ground truth KECUALI amendemen bertanggal.
 - **Env notes:** `.env` (Prisma CLI) + `.env.local` (Next runtime) wajib sinkron. DIRECT_URL pakai session-mode pooler port 5432 (host direct Supabase IPv6-only di mesin dev). Test DB terisolasi: Docker `kassurs-test-db` (postgres:17-alpine, port 5433, user postgres, pass kassurs_test) — `docker start kassurs-test-db` sebelum `npm run test`; E2E juga pakai DB ini (override di webServer playwright.config). Migrations: s.d. `20260901053211_report_snapshots`.
 
 ## Gotchas (temuan Modul 0–5 — jangan pelajari ulang)

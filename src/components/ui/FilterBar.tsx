@@ -55,11 +55,23 @@ export default function FilterBar({
   // masih terjangkau; pembayaran masa depan di luar kebutuhan V1).
   const tahunOptions = [tahunIni - 1, tahunIni, tahunIni + 1];
 
-  // Neo-Brutalism V2.2 (resep 5.6 input)
+  // Neo-Brutalism V2.2 (resep 5.6 input) — appearance-none + chevron SVG
+  // overlay (panah native select tidak konsisten antar browser).
   const selectClass =
-    "w-full rounded-xl border-2 border-black bg-white px-3 py-2.5 text-xs font-bold " +
-    "text-black shadow-neo-sm focus:outline-none focus:ring-2 focus:ring-neo-yellow";
+    "w-full appearance-none rounded-xl border-2 border-black bg-white px-3 py-2.5 pr-8 text-xs font-bold " +
+    "text-black shadow-neo-sm focus:outline-none focus:ring-2 focus:ring-neo-yellow cursor-pointer";
   const labelClass = "text-[10px] font-extrabold uppercase tracking-wider text-black";
+
+  const SelectWrapper = ({ children }: { children: React.ReactNode }) => (
+    <div className="relative">
+      {children}
+      <div className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <path d="M2 4L6 8L10 4" stroke="#000" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </div>
+    </div>
+  );
 
   return (
     <div className="grid grid-cols-2 gap-2">
@@ -67,38 +79,42 @@ export default function FilterBar({
         <label htmlFor={`${uid}-bulan`} className={labelClass}>
           Bulan
         </label>
-        <select
-          id={`${uid}-bulan`}
-          value={bulan}
-          onChange={(e) => onChange({ bulan: Number(e.target.value), tahun })}
-          data-testid={testIdPrefix ? `${testIdPrefix}-bulan` : undefined}
-          className={`${selectClass} bg-neo-yellow`}
-        >
-          {NAMA_BULAN.map((nama, i) => (
-            <option key={i + 1} value={i + 1}>
-              {nama}
-            </option>
-          ))}
-        </select>
+        <SelectWrapper>
+          <select
+            id={`${uid}-bulan`}
+            value={bulan}
+            onChange={(e) => onChange({ bulan: Number(e.target.value), tahun })}
+            data-testid={testIdPrefix ? `${testIdPrefix}-bulan` : undefined}
+            className={`${selectClass} bg-neo-yellow`}
+          >
+            {NAMA_BULAN.map((nama, i) => (
+              <option key={i + 1} value={i + 1}>
+                {nama}
+              </option>
+            ))}
+          </select>
+        </SelectWrapper>
       </div>
 
       <div className="flex flex-col gap-1">
         <label htmlFor={`${uid}-tahun`} className={labelClass}>
           Tahun
         </label>
-        <select
-          id={`${uid}-tahun`}
-          value={tahun}
-          onChange={(e) => onChange({ bulan, tahun: Number(e.target.value) })}
-          data-testid={testIdPrefix ? `${testIdPrefix}-tahun` : undefined}
-          className={selectClass}
-        >
-          {tahunOptions.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
+        <SelectWrapper>
+          <select
+            id={`${uid}-tahun`}
+            value={tahun}
+            onChange={(e) => onChange({ bulan, tahun: Number(e.target.value) })}
+            data-testid={testIdPrefix ? `${testIdPrefix}-tahun` : undefined}
+            className={selectClass}
+          >
+            {tahunOptions.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </SelectWrapper>
       </div>
 
       {categories && onKategoriChange && (
@@ -106,19 +122,21 @@ export default function FilterBar({
           <label htmlFor={`${uid}-kategori`} className={labelClass}>
             Kategori
           </label>
-          <select
-            id={`${uid}-kategori`}
-            value={kategoriId ?? ""}
-            onChange={(e) => onKategoriChange(e.target.value)}
-            className={selectClass}
-          >
-            <option value="">Semua kategori</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nama}
-              </option>
-            ))}
-          </select>
+          <SelectWrapper>
+            <select
+              id={`${uid}-kategori`}
+              value={kategoriId ?? ""}
+              onChange={(e) => onKategoriChange(e.target.value)}
+              className={selectClass}
+            >
+              <option value="">Semua kategori</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nama}
+                </option>
+              ))}
+            </select>
+          </SelectWrapper>
         </div>
       )}
 
@@ -127,21 +145,23 @@ export default function FilterBar({
           <label htmlFor={`${uid}-status`} className={labelClass}>
             Status
           </label>
-          <select
-            id={`${uid}-status`}
-            value={status ?? ""}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v) onStatusChange(v as StatusBadgeStatus);
-            }}
-            className={selectClass}
-          >
-            <option value="" disabled>
-              Semua status
-            </option>
-            <option value="LUNAS">Lunas</option>
-            <option value="BELUM">Belum Bayar</option>
-          </select>
+          <SelectWrapper>
+            <select
+              id={`${uid}-status`}
+              value={status ?? ""}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v) onStatusChange(v as StatusBadgeStatus);
+              }}
+              className={selectClass}
+            >
+              <option value="" disabled>
+                Semua status
+              </option>
+              <option value="LUNAS">Lunas</option>
+              <option value="BELUM">Belum Bayar</option>
+            </select>
+          </SelectWrapper>
         </div>
       )}
     </div>

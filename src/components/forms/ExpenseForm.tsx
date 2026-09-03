@@ -42,6 +42,16 @@ const inputNeo =
   "w-full rounded-xl border-2 border-black bg-white p-2.5 text-xs font-bold text-black shadow-neo-sm " +
   "placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-neo-yellow disabled:bg-neo-gray";
 
+// Dot warna kategori (2-col grid) — sinkron token neo (tailwind.config.ts).
+// Kategori custom fallback neo-gray #F3F4F6.
+const KATEGORI_DOT: Record<string, string> = {
+  Konsumsi: "#86EFAC",
+  Acara: "#FCA5A5",
+  ATK: "#BAE6FD",
+  Sumbangan: "#FED7AA",
+  "Lain-lain": "#DDD6FE",
+};
+
 export default function ExpenseForm({
   categories,
   onSaved,
@@ -161,10 +171,11 @@ export default function ExpenseForm({
         <div
           role="radiogroup"
           aria-label="Kategori pengeluaran"
-          className="flex gap-1.5 overflow-x-auto pb-1 text-xs"
+          className="grid grid-cols-2 gap-[5px]"
         >
           {categories.map((c) => {
             const aktif = categoryId === c.id;
+            const dotColor = KATEGORI_DOT[c.nama] ?? "#F3F4F6";
             return (
               <button
                 key={c.id}
@@ -175,10 +186,20 @@ export default function ExpenseForm({
                 disabled={loading}
                 data-testid={`chip-kategori-${c.id}`}
                 className={cn(
-                  "inline-flex min-h-[44px] flex-shrink-0 items-center rounded-xl border-[2.5px] border-black px-3 py-1 shadow-neo-sm neo-press neo-press-sm select-none",
-                  aktif ? "bg-black font-extrabold text-white" : "bg-white font-bold text-black"
+                  "flex items-center gap-1.5 rounded-[10px] border-2 border-black px-2.5 py-1.5 text-[11px] font-bold min-h-[36px] neo-press select-none transition-none",
+                  aktif
+                    ? "bg-black text-white shadow-none translate-x-[2.5px] translate-y-[2.5px]"
+                    : "bg-white text-black shadow-[2.5px_2.5px_0_#000]"
                 )}
               >
+                <span
+                  className="h-2 w-2 shrink-0 rounded-full border-[1.5px]"
+                  style={{
+                    background: aktif ? "#FEF08A" : dotColor,
+                    borderColor: aktif ? "#FEF08A" : dotColor,
+                  }}
+                  aria-hidden="true"
+                />
                 {c.nama}
               </button>
             );
@@ -188,9 +209,10 @@ export default function ExpenseForm({
             onClick={() => setTambahKategori((v) => !v)}
             disabled={loading}
             data-testid="chip-kategori-baru"
-            className="flex min-h-[44px] flex-shrink-0 items-center gap-1 rounded-xl border-[2.5px] border-dashed border-black bg-neo-yellow px-3 py-1 font-bold text-black shadow-neo-sm neo-press neo-press-sm"
+            className="col-span-2 flex min-h-[36px] items-center justify-center gap-1.5 rounded-[10px] border-2 border-dashed border-black bg-neo-yellow px-2.5 py-1.5 text-[11px] font-bold text-black shadow-[2.5px_2.5px_0_#000] neo-press select-none"
           >
-            <Plus className="h-3.5 w-3.5 stroke-[3]" aria-hidden="true" /> Baru
+            <Plus className="h-3 w-3 stroke-[3]" aria-hidden="true" />
+            Tambah Kategori Baru
           </button>
         </div>
 

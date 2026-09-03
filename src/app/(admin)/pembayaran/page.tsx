@@ -26,10 +26,10 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "r
 import { toast } from "sonner";
 import { Search } from "lucide-react";
 import MemberCard from "@/components/dashboard/MemberCard";
-import PaymentRapelDrawer, {
-  type RapelInput,
-} from "@/components/payments/PaymentRapelDrawer";
-import PaymentEditDrawer from "@/components/payments/PaymentEditDrawer";
+import dynamic from "next/dynamic";
+import type { RapelInput } from "@/components/payments/PaymentRapelDrawer";
+const PaymentRapelDrawer = dynamic(() => import("@/components/payments/PaymentRapelDrawer"));
+const PaymentEditDrawer = dynamic(() => import("@/components/payments/PaymentEditDrawer"));
 import BottomNav from "@/components/layout/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
 import NeoButton from "@/components/ui/NeoButton";

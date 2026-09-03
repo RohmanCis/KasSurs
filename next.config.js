@@ -1,9 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
+  },
   poweredByHeader: false,
   reactStrictMode: true,
-  // Security headers (FASE 1, 2026-09-03). CSP sengaja TIDAK ditambahkan —
-  // keputusan sudah dibuat (di-skip). Berlaku global /:path*.
   async headers() {
     return [
       {

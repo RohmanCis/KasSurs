@@ -106,7 +106,7 @@ Resep persis mockup: `neo-member-card p-2.5 h-[72px] flex flex-col justify-betwe
 Track: `h-3.5 bg-neo-gray border-2 border-black rounded-lg p-0.5`. Isi: `bg-neo-green rounded` dengan `transition-[width] duration-300`; `border-r-2 border-black` HANYA saat `persen > 0` (amendemen 2026-09-02 — cegah garis hitam 2px saat fill 0%; amendemen FASE perf 2026-09-03: `transition-all` → `transition-[width]` — hanya lebar yang beranimasi).
 
 ### 5.6 Input
-`border-2 / border-[2.5px] border-black rounded-xl bg-white px-3 py-2.5 font-bold shadow-neo-sm`. Prefix (mis. "+62") = span terpisah dengan `border-r-[2.5px] border-black bg-neo-yellow`. Readonly/disabled: `bg-neo-gray` + ikon lucide (mis. `calendar`). Nominal besar: `text-2xl font-extrabold tabular-nums` (Bricolage, bukan mono).
+`border-2 / border-[2.5px] border-black rounded-xl bg-white px-3 py-2.5 font-bold shadow-neo-sm`. Prefix (mis. "+62") = span terpisah dengan `border-r-[2.5px] border-black bg-neo-yellow`. Readonly/disabled: `bg-neo-gray` + ikon lucide (mis. `calendar`). Nominal besar: `text-2xl font-extrabold tabular-nums` (Bricolage, bukan mono). **Amendemen 2026-09-03 (FilterBar select):** native `<select>` kini `appearance-none` + `pr-8` + `cursor-pointer`, chevron SVG overlay hitam 12px via `SelectWrapper` (`pointer-events-none`, `right-2.5` center vertikal) — panah native select tidak konsisten antar browser. Kontrak props/logic tidak berubah.
 
 ### 5.7 Header bar halaman
 Warna flat per konteks (dashboard=Yellow, pembayaran=Green, pengeluaran=Coral, anggota=Purple, laporan=Orange, status anggota=Sky), `border-b-[2.5px] border-black`, judul uppercase font-extrabold. (Amendemen 2026-09-02: /pembayaran split ke tab sendiri diberi Green — semua warna lain sudah terpakai; /anggota Purple menggantikan Sky sesuai keputusan user FASE-3.)
@@ -164,7 +164,7 @@ Speed-Tap 1-tap sengaja tanpa konfirmasi demi kecepatan; salah-tap dimitigasi 3 
 Tidak ada lagi pola "tap nama → form expand in-place / accordion" (artefak v1.0, dihapus).
 
 **Alur Catat Pengeluaran:**
-1. Kategori via **Horizontal Chip Pills** (`cat-pill neo-btn`, scroll horizontal) — **BUKAN native `<select>`**: Konsumsi, Acara, ATK, Sumbangan, Lain-lain (+ kategori custom). Chip aktif = **inverted** `bg-black text-white font-extrabold`; nonaktif `bg-white text-black font-bold`.
+1. Kategori via **Chip Pills** — **BUKAN native `<select>`**: Konsumsi, Acara, ATK, Sumbangan, Lain-lain (+ kategori custom). **Amendemen 2026-09-03: layout grid 2 kolom** (menggantikan horizontal scroll pills) dengan **color dot** kategori (`h-2 w-2 rounded-full border-[1.5px]`, inline style): Konsumsi `#86EFAC`, Acara `#FCA5A5`, ATK `#BAE6FD`, Sumbangan `#FED7AA`, Lain-lain `#DDD6FE`, kategori custom fallback `#F3F4F6` (sinkron token neo). Chip aktif = **inverted** `bg-black text-white font-extrabold` + dot kuning `#FEF08A`, press-down `shadow-[2.5px_2.5px_0_#000]` → `translate-[2.5px] shadow-none`, `min-h-[36px]`, `border-2 rounded-[10px]`. Tombol "Tambah Kategori Baru" `col-span-2` dashed `bg-neo-yellow`.
 2. Nominal besar (input voucher `text-2xl font-extrabold tabular-nums`), deskripsi, tanggal (default hari ini, readonly-style `bg-neo-gray` + ikon calendar).
 3. Tombol "SIMPAN PENGELUARAN" `bg-neo-green` → toast sukses dengan aksi eksplisit "Input Lagi" (tidak auto-reset). Validasi `jumlah > 0` di client (toast "Nominal pengeluaran harus > 0") + server (Zod).
 
@@ -207,7 +207,7 @@ Level: **ringan tapi tactile** — press-down adalah animasi utama, bukan transi
 
 - Kontras WCAG AA: teks selalu hitam di atas warna flat terang (semua warna neo L tinggi — hitam di atasnya > 7:1); teks putih hanya di atas hitam pekat. Teks berwarna (`neo-darkgreen`/`neo-darkred`) hanya untuk nominal di atas putih.
 - Status tidak pernah hanya warna — selalu ada teks ("✓ Lunas", "Belum", "Tap Rp 30k").
-- Tap target ≥ 44×44px (tombol full-width `py-3.5`, roster card `p-3`, bottom bar `h-16`; chip filter/kategori & kontrol kecil pakai `min-h-[44px]` — amendemen 2026-09-02).
+- Tap target ≥ 44×44px (tombol full-width `py-3.5`, roster card `p-3`, chip filter `min-h-[44px]`; bottom bar — amendemen 2026-09-03: `h-16` fixed → `py-2` auto-height, `pb-[env(safe-area-inset-bottom)]` DIHAPUS, tinggi link tetap `min-h-[44px]`; chip kategori pengeluaran kini `min-h-[36px]` sejak amendemen grid 2-col — di bawah 44px, diterima karena aksi non-destruktif dan lingkup form).
 - Label form selalu terlihat (uppercase font-extrabold di atas input), bukan placeholder-only.
 - `prefers-reduced-motion` menonaktikkan popIn/shake/press-translate.
 - Border tebal justru membantu low-vision: batas elemen selalu eksplisit.
