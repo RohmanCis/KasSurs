@@ -1,9 +1,9 @@
 ﻿# TASKS: KasSurs
 
-**Versi:** 1.1 (2026-09-02 — status sync pasca FASE-REDESIGN-3)
+**Versi:** 1.2 (2026-09-03 — status sync pasca deepening #3/#4, API Handler Kit #1, code-review fix batch, UI polish & perf batch)
 **Lokasi File:** `.agents/3-TASKS.md`
 **Dependensi:** `.agents/1-PRD.md`, `.agents/2-TECH-SPEC.md`, `.agents/3-DESIGN.md`
-**Skenario:** Project baru (tidak ada boilerplate) + Tech Spec lengkap â†’ mulai dari T-01 Setup Project
+**Skenario:** Project baru (tidak ada boilerplate) + Tech Spec lengkap → mulai dari T-01 Setup Project
 **Prioritas pengerjaan:** Semua modul sekaligus, end-to-end
 
 ---
@@ -53,6 +53,7 @@
 - **Tanggal:** 2026-08-30
 - **Estimasi:** 1 jam
 - **File yang diubah:** `src/app/globals.css`, `tailwind.config.ts`, `src/app/layout.tsx`
+- **Catatan (2026-09-02):** token OKLCH & Plus Jakarta Sans DIGANTIKAN Neo-Brutalism V2.2 — token `neo.*` flat + Bricolage Grotesque (lihat 3-DESIGN V2.2). Deskripsi di atas tetap historis (implementasi V1.0 saat itu).
 
 ### T-05
 - **Judul:** Setup Vitest + Playwright
@@ -67,7 +68,7 @@
 
 ### T-06
 - **Judul:** Definisikan API Contract Types
-- **Deskripsi:** Buat `src/lib/types.ts` berisi seluruh interface TypeScript (LoginRequest, MemberDTO, PaymentDTO, ExpenseDTO, dst.) persis sesuai Tech Spec Bagian 3 â€” kontrak ini dipakai bersama oleh seluruh task endpoint berikutnya, wajib dibuat lebih dulu agar tidak ada penamaan field yang tidak konsisten.
+- **Deskripsi:** Buat `src/lib/types.ts` berisi seluruh interface TypeScript (LoginRequest, MemberDTO, PaymentDTO, ExpenseDTO, dst.) persis sesuai Tech Spec Bagian 3 — kontrak ini dipakai bersama oleh seluruh task endpoint berikutnya, wajib dibuat lebih dulu agar tidak ada penamaan field yang tidak konsisten.
 - **Modul:** Setup
 - **Prioritas:** High
 - **Status:** Done
@@ -115,7 +116,7 @@
 
 ### T-10
 - **Judul:** Endpoint POST /api/auth/login
-- **Deskripsi:** Implementasi login: cek lockout (T-09) â†’ verifikasi PIN (T-07) â†’ catat LoginAttempt â†’ generate JWT cookie (T-08) jika sukses. Response sesuai `LoginResponse`/`LoginErrorResponse` di types.ts.
+- **Deskripsi:** Implementasi login: cek lockout (T-09) → verifikasi PIN (T-07) → catat LoginAttempt → generate JWT cookie (T-08) jika sukses. Response sesuai `LoginResponse`/`LoginErrorResponse` di types.ts.
 - **Modul:** Auth
 - **Prioritas:** High
 - **Status:** Done
@@ -124,9 +125,9 @@
 - **Estimasi:** 1.5 jam
 - **File yang diubah:** `src/app/api/auth/login/route.ts`
 - **Acceptance Criteria:**
-  - Login sukses dengan kredensial benar â†’ cookie ter-set, response 200 dengan role & memberId
-  - Login gagal â†’ LoginAttempt tercatat, response 401 dengan error INVALID_CREDENTIALS
-  - 5x gagal berturut-turut â†’ response 429 dengan error ACCOUNT_LOCKED
+  - Login sukses dengan kredensial benar → cookie ter-set, response 200 dengan role & memberId
+  - Login gagal → LoginAttempt tercatat, response 401 dengan error INVALID_CREDENTIALS
+  - 5x gagal berturut-turut → response 429 dengan error ACCOUNT_LOCKED
 
 ### T-11
 - **Judul:** Endpoint POST /api/auth/logout
@@ -141,7 +142,7 @@
 
 ### T-12
 - **Judul:** Middleware RBAC (Role-Based Access Control)
-- **Deskripsi:** Implementasi `src/middleware.ts` â€” validasi JWT dari cookie, cek role sebelum request sampai ke handler. Anggota yang akses endpoint admin-only ditolak 403 sebelum query database dijalankan (FR-20). **Amendemen 2026-09-01 (sliding session):** middleware juga jadi titik re-issue token (exp baru +30 hari) saat sisa masa berlaku < 15 hari â€" detail di Tech Spec Bagian 4 "Alur Sliding Session".
+- **Deskripsi:** Implementasi `src/middleware.ts` — validasi JWT dari cookie, cek role sebelum request sampai ke handler. Anggota yang akses endpoint admin-only ditolak 403 sebelum query database dijalankan (FR-20). **Amendemen 2026-09-01 (sliding session):** middleware juga jadi titik re-issue token (exp baru +30 hari) saat sisa masa berlaku < 15 hari — detail di Tech Spec Bagian 4 "Alur Sliding Session".
 - **Modul:** Auth
 - **Prioritas:** High
 - **Status:** Done
@@ -150,13 +151,13 @@
 - **Estimasi:** 1.5 jam
 - **File yang diubah:** `src/middleware.ts`
 - **Acceptance Criteria:**
-  - Role ANGGOTA mengakses `/api/members` (POST/PATCH) â†’ 403
-  - Role ADMIN mengakses seluruh endpoint â†’ lolos ke handler
-  - Tidak ada cookie/JWT invalid â†’ redirect ke `/login`
+  - Role ANGGOTA mengakses `/api/members` (POST/PATCH) → 403
+  - Role ADMIN mengakses seluruh endpoint → lolos ke handler
+  - Tidak ada cookie/JWT invalid → redirect ke `/login`
 
 ### T-13
 - **Judul:** Halaman Login (UI)
-- **Deskripsi:** Buat `src/app/(auth)/login/page.tsx` â€” form No HP + PIN sesuai DESIGN.md. Handle error state (salah PIN, lockout) dengan pesan jelas.
+- **Deskripsi:** Buat `src/app/(auth)/login/page.tsx` — form No HP + PIN sesuai DESIGN.md. Handle error state (salah PIN, lockout) dengan pesan jelas.
 - **Modul:** Auth
 - **Prioritas:** High
 - **Status:** Done
@@ -166,8 +167,8 @@
 - **File yang diubah:** `src/app/(auth)/login/page.tsx`, `src/components/forms/LoginForm.tsx`
 
 ### T-14
-- **Judul:** Seed Script â€” Akun Admin Pertama & Kategori Default (FR-22)
-- **Deskripsi:** Buat `prisma/seed.ts` â€” baca `SEED_ADMIN_PHONE`/`SEED_ADMIN_PIN` dari env var, hash PIN, buat 1 Member role=ADMIN (idempotent â€” skip jika sudah ada admin). Seed kategori default (Konsumsi, Acara, ATK, Sumbangan, Lain-lain).
+- **Judul:** Seed Script — Akun Admin Pertama & Kategori Default (FR-22)
+- **Deskripsi:** Buat `prisma/seed.ts` — baca `SEED_ADMIN_PHONE`/`SEED_ADMIN_PIN` dari env var, hash PIN, buat 1 Member role=ADMIN (idempotent — skip jika sudah ada admin). Seed kategori default (Konsumsi, Acara, ATK, Sumbangan, Lain-lain).
 - **Modul:** Auth
 - **Prioritas:** High
 - **Status:** Done
@@ -176,8 +177,8 @@
 - **Estimasi:** 1 jam
 - **File yang diubah:** `prisma/seed.ts`, `package.json` (prisma seed config)
 - **Acceptance Criteria:**
-  - Seed pertama kali â†’ 1 admin + 5 kategori default tercipta
-  - Seed dijalankan ulang â†’ tidak membuat admin duplikat (idempotent check FR-22)
+  - Seed pertama kali → 1 admin + 5 kategori default tercipta
+  - Seed dijalankan ulang → tidak membuat admin duplikat (idempotent check FR-22)
 
 ---
 
@@ -185,7 +186,7 @@
 
 ### T-15
 - **Judul:** Helper Audit Log (Reusable)
-- **Deskripsi:** Buat `src/lib/audit.ts` â€” fungsi `recordAuditLog(actorId, aksi, entityType, entityId, dataLama, dataBaru)` yang dipanggil di setiap endpoint create/update/delete Payment/Expense (FR-21, wajib). Dibuat sekali di sini agar dipakai reusable di seluruh endpoint modul lain.
+- **Deskripsi:** Buat `src/lib/audit.ts` — fungsi `recordAuditLog(actorId, aksi, entityType, entityId, dataLama, dataBaru)` yang dipanggil di setiap endpoint create/update/delete Payment/Expense (FR-21, wajib). Dibuat sekali di sini agar dipakai reusable di seluruh endpoint modul lain.
 - **Modul:** Member
 - **Prioritas:** High
 - **Status:** Done
@@ -196,7 +197,7 @@
 
 ### T-16
 - **Judul:** Endpoint GET & POST /api/members
-- **Deskripsi:** GET: fetch seluruh anggota aktif sekaligus (client-side filter, tanpa parameter search di server â€” sesuai kesepakatan performa), sertakan status bayar jika `bulan`/`tahun` diisi. POST: tambah anggota baru (FR-03), validasi No HP unik, hash PIN, role default ANGGOTA.
+- **Deskripsi:** GET: fetch seluruh anggota aktif sekaligus (client-side filter, tanpa parameter search di server — sesuai kesepakatan performa), sertakan status bayar jika `bulan`/`tahun` diisi. POST: tambah anggota baru (FR-03), validasi No HP unik, hash PIN, role default ANGGOTA.
 - **Modul:** Member
 - **Prioritas:** High
 - **Status:** Done
@@ -205,9 +206,9 @@
 - **Estimasi:** 2 jam
 - **File yang diubah:** `src/app/api/members/route.ts`
 - **Acceptance Criteria:**
-  - GET tanpa query â†’ list seluruh anggota aktif
-  - GET dengan `?bulan=&tahun=` â†’ tiap anggota punya field `statusBayarBulanIni`
-  - POST dengan No HP sudah terdaftar â†’ ditolak dengan error jelas
+  - GET tanpa query → list seluruh anggota aktif
+  - GET dengan `?bulan=&tahun=` → tiap anggota punya field `statusBayarBulanIni`
+  - POST dengan No HP sudah terdaftar → ditolak dengan error jelas
 
 ### T-17
 - **Judul:** Endpoint PATCH /api/members/[id] (Update & Reset Akses)
@@ -231,11 +232,11 @@
 - **Estimasi:** 1 jam
 - **File yang diubah:** `src/app/api/members/[id]/deactivate/route.ts`
 - **Acceptance Criteria:**
-  - Nonaktifkan anggota biasa â†’ berhasil, data historis tetap ada
-  - Nonaktifkan satu-satunya admin aktif â†’ ditolak 403
+  - Nonaktifkan anggota biasa → berhasil, data historis tetap ada
+  - Nonaktifkan satu-satunya admin aktif → ditolak 403
 
 ### T-19
-- **Judul:** Halaman Manajemen Anggota (Admin) â€” List & Form Tambah/Edit
+- **Judul:** Halaman Manajemen Anggota (Admin) — List & Form Tambah/Edit
 - **Deskripsi:** UI daftar anggota (FR-05) dengan status aktif/nonaktif, form tambah anggota baru, aksi nonaktifkan & reset akses.
 - **Modul:** Member
 - **Prioritas:** Mid
@@ -251,7 +252,7 @@
 
 ### T-20
 - **Judul:** Endpoint GET & POST /api/payments
-- **Deskripsi:** GET: list pembayaran dengan filter bulan/tahun/memberId/status. POST: catat pembayaran baru â€” validasi constraint unique `[memberId, bulan, tahun]` di server (lapisan kedua setelah client-side check), return `409 ALREADY_PAID` jika duplikat. Panggil `recordAuditLog` (T-15) setelah create sukses.
+- **Deskripsi:** GET: list pembayaran dengan filter bulan/tahun/memberId/status. POST: catat pembayaran baru — validasi constraint unique `[memberId, bulan, tahun]` di server (lapisan kedua setelah client-side check), return `409 ALREADY_PAID` jika duplikat. Panggil `recordAuditLog` (T-15) setelah create sukses.
 - **Modul:** Payment
 - **Prioritas:** High
 - **Status:** Done
@@ -260,9 +261,9 @@
 - **Estimasi:** 2.5 jam
 - **File yang diubah:** `src/app/api/payments/route.ts`
 - **Acceptance Criteria:**
-  - POST payment baru â†’ tersimpan + AuditLog CREATE tercatat
-  - POST payment untuk member yang sudah lunas bulan itu â†’ 409 dengan `PaymentConflictResponse`
-  - GET dengan filter kombinasi (bulan+tahun+status) â†’ hasil sesuai filter
+  - POST payment baru → tersimpan + AuditLog CREATE tercatat
+  - POST payment untuk member yang sudah lunas bulan itu → 409 dengan `PaymentConflictResponse`
+  - GET dengan filter kombinasi (bulan+tahun+status) → hasil sesuai filter
 
 ### T-21
 - **Judul:** Endpoint PATCH & DELETE /api/payments/[id]
@@ -277,7 +278,7 @@
 - **Acceptance Criteria:** Setiap PATCH/DELETE menghasilkan 1 entry AuditLog dengan dataLama terisi benar
 
 ### T-22
-- **Judul:** Halaman Catat Pembayaran (Admin) â€” Search-Select + Form
+- **Judul:** Halaman Catat Pembayaran (Admin) — Search-Select + Form
 - **Deskripsi:** Implementasi alur 7-langkah sesuai DESIGN.md Bagian 5.4: fetch sekali 30 anggota, search-select client-side, sorting "Belum Bayar" duluan, form expand in-place, toast sukses dengan aksi "Input Lagi" (bukan auto-reset).
 - **Modul:** Payment
 - **Prioritas:** High
@@ -287,7 +288,7 @@
 - **Estimasi:** 3 jam
 - **File yang diubah:** `src/app/(admin)/pembayaran/page.tsx`, `src/components/forms/PaymentForm.tsx`, `src/components/forms/MemberSearchSelect.tsx`
 - **Catatan (2026-09-02):** Implementasi V1.0 DIGANTIKAN TOTAL oleh FASE-REDESIGN-3 (alur Speed-Tap 1-tap + drawer rapel, PRD FR-06 V1.1). `PaymentForm.tsx` & `MemberSearchSelect.tsx` DIHAPUS saat cleanup. Status tetap Done (implementasi V1.0 berjalan penuh sebelum redesign).
-- **Acceptance Criteria:** Sesuai 7 langkah alur di DESIGN.md 5.4 â€” termasuk client-side reject sebelum submit jika sudah lunas
+- **Acceptance Criteria:** Sesuai 7 langkah alur di DESIGN.md 5.4 — termasuk client-side reject sebelum submit jika sudah lunas
 
 ---
 
@@ -379,7 +380,7 @@
 
 ### T-30
 - **Judul:** Komponen Filter & Tabel Transaksi (Reusable)
-- **Deskripsi:** Komponen tabel dengan zebra-stripe, badge status, filter bulan/tahun/kategori/status (FR-13) â€” dipakai di halaman Pembayaran, Pengeluaran, dan Laporan.
+- **Deskripsi:** Komponen tabel dengan zebra-stripe, badge status, filter bulan/tahun/kategori/status (FR-13) — dipakai di halaman Pembayaran, Pengeluaran, dan Laporan.
 - **Modul:** Dashboard
 - **Prioritas:** Mid
 - **Status:** Done
@@ -466,8 +467,8 @@
 - **Catatan (2026-09-01):** Review coverage, TANPA test baru — tidak ada gap nyata. Bukti: POST sukses + audit CREATE (`payments.test.ts` "sukses → 201, record tersimpan, audit CREATE"), 409 duplikat exact kontrak (`payments.test.ts` + PATCH 409 `payments-patch.test.ts` + race P2002 `race-payments.test.ts`), audit UPDATE/DELETE Payment (`payments-patch.test.ts` dataLama/dataBaru benar), audit CREATE/UPDATE/DELETE Expense (`expenses.test.ts`, `expenses-patch.test.ts`), audit transaksional & rollback (`audit.test.ts`). Tambah coverage = over-engineering (Tech Spec Bagian 5: alur kritikal saja).
 
 ### T-37
-- **Judul:** E2E Smoke Test — 3 Alur Kritikal
-- **Deskripsi:** Playwright test: (1) login admin & anggota, (2) catat pembayaran end-to-end, (3) export laporan PDF/Excel. Sesuai Tech Spec Bagian 5 Strategi Testing.
+- **Judul:** E2E Smoke Test — Alur Kritikal (4 spec / 10 test)
+- **Deskripsi:** Playwright test — 4 spec / 10 test: (1) login admin & anggota, (2) catat pembayaran end-to-end (alur Speed-Tap), (3) export laporan PDF/Excel, (4) skenario lanjutan Speed-Tap (`speed-tap.spec.ts`: undo/badge/drawer/rapel cross-month). Sesuai Tech Spec Bagian 5 Strategi Testing.
 - **Modul:** Testing
 - **Prioritas:** Mid
 - **Status:** Done
@@ -495,7 +496,7 @@
 
 ### T-39
 - **Judul:** Jalankan Migration & Seed di Production
-- **Deskripsi:** `prisma migrate deploy` + `prisma db seed` di environment production Supabase â€” buat akun admin pertama nyata.
+- **Deskripsi:** `prisma migrate deploy` + `prisma db seed` di environment production Supabase — buat akun admin pertama nyata.
 - **Modul:** Deployment
 - **Prioritas:** High
 - **Status:** Todo
@@ -553,24 +554,24 @@
 
 ---
 
-## ðŸ“Š Ringkasan
+## 📊 Ringkasan
 
 | Modul | Jumlah Task | Estimasi Total |
 |---|---|---|
-| Setup | T-01 â€“ T-06 | ~6.5 jam |
-| Auth | T-07 â€“ T-14 | ~11 jam |
-| Member | T-15 â€“ T-19 | ~8 jam |
-| Payment | T-20 â€“ T-22 | ~7 jam |
-| Expense | T-23 â€“ T-26 | ~6.5 jam |
-| Dashboard | T-27 â€“ T-30 | ~7.5 jam |
-| Reports | T-31 â€“ T-34 | ~6.5 jam |
-| Testing | T-35 â€“ T-37 | ~5.5 jam |
-| Deployment | T-38 â€“ T-39 | ~1.5 jam |
+| Setup | T-01 – T-06 | ~6.5 jam |
+| Auth | T-07 – T-14 | ~11 jam |
+| Member | T-15 – T-19 | ~8 jam |
+| Payment | T-20 – T-22 | ~7 jam |
+| Expense | T-23 – T-26 | ~6.5 jam |
+| Dashboard | T-27 – T-30 | ~7.5 jam |
+| Reports | T-31 – T-34 | ~6.5 jam |
+| Testing | T-35 – T-37 | ~5.5 jam |
+| Deployment | T-38 – T-39 | ~1.5 jam |
 | **Total** | **39 task** | **~60 jam** (perkiraan kasar, asumsi 1 developer/agent fokus penuh, belum termasuk waktu review manual per task) |
 
-**Catatan estimasi:** [Low confidence] â€” angka jam adalah perkiraan kasar berbasis kompleksitas task tertulis, bukan hasil pengukuran nyata. Kecepatan aktual sangat bergantung pada seberapa lancar agent bekerja tanpa perlu banyak koreksi, dan seberapa detail review yang dilakukan tiap task selesai.
+**Catatan estimasi:** [Low confidence] — angka jam adalah perkiraan kasar berbasis kompleksitas task tertulis, bukan hasil pengukuran nyata. Kecepatan aktual sangat bergantung pada seberapa lancar agent bekerja tanpa perlu banyak koreksi, dan seberapa detail review yang dilakukan tiap task selesai.
 
-## ðŸ”„ Status
-Task list ini disusun dari `.agents/2-TECH-SPEC.md` yang sudah lengkap (API contract types + testing strategy), sehingga tiap task punya kontrak field yang jelas untuk dikerjakan tanpa tebak-tebak antar sesi. Dependensi diurutkan: Setup â†’ Auth (termasuk bootstrap admin FR-22) â†’ Member â†’ Payment/Expense â†’ Dashboard â†’ Reports â†’ Testing â†’ Deployment.
+## 🔄 Status
+Task list ini disusun dari `.agents/2-TECH-SPEC.md` yang sudah lengkap (API contract types + testing strategy), sehingga tiap task punya kontrak field yang jelas untuk dikerjakan tanpa tebak-tebak antar sesi. Dependensi diurutkan: Setup → Auth (termasuk bootstrap admin FR-22) → Member → Payment/Expense → Dashboard → Reports → Testing → Deployment.
 
 **Langkah selanjutnya:** T-38–T-39 (Deployment). Detail state: `.agents/HANDOFF.md`.

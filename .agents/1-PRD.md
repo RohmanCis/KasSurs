@@ -5,6 +5,7 @@
 **Lokasi File:** `.agents/1-PRD.md`
 
 **Changelog:**
+- **1.1 (2026-09-03):** Amendemen minor FR-09 — pemilihan kategori pengeluaran dari **horizontal chip pills** (keputusan 2026-09-02) menjadi **grid 2 kolom + color dot** (selaras 3-DESIGN V2.2). Murni lapisan presentasi; tidak mengubah endpoint/API/scope.
 - **1.1 (2026-09-02):** Amendemen alur catat pembayaran untuk UI Neo-Brutalism V2.2 (Speed-Tap). **FR-06 mayor** (rewrite: 2 mode input — 1-Tap Speed-Tap default + drawer rapel via long-press, mitigasi salah-tap 3 lapis). **FR-07/08/09/12/14 minor** (search + chip filter gabungan; drawer edit/hapus jadi UI konsumen FR-08; kategori chip pills bukan dropdown; progress bar dashboard; kupon + matriks 12 bulan /status).
 - **1.0:** Baseline awal (23 FR, termasuk FR-22 bootstrap admin, FR-23 snapshot laporan — amendemen 2026-09-01).
 
@@ -181,7 +182,7 @@ KasSurs adalah aplikasi web sederhana berbasis mobile untuk mengelola kas bulana
 - **Output:** Data pengeluaran tersimpan
 - **Aturan Bisnis:**
   - Jumlah harus > 0 (validasi client + server), kategori wajib dipilih
-  - **(Amendemen 2026-09-02)** Pemilihan kategori via **horizontal chip pills** (scroll horizontal, chip aktif inverted `bg-black text-white`), **BUKAN dropdown native `<select>`** — kontras visual jelas & tap target besar di mobile *(catatan: Tech Spec Bagian endpoint masih menyebut dropdown native — diselaraskan di Tech Spec)*
+  - **(Amendemen 2026-09-03)** Pemilihan kategori via **grid 2 kolom + color dot** — tiap kategori berupa kartu dalam grid 2 kolom dengan dot warna di samping label, kategori aktif inverted hitam-putih; dot warna mempercepat scan kategori & tap target besar di mobile tanpa scroll horizontal — **BUKAN dropdown native `<select>`** *(menggantikan keputusan horizontal chip pills dari amendemen 2026-09-02; diselaraskan dengan 3-DESIGN V2.2 — amendemen FR-09 2026-09-03)*
   - Nominal besar (input voucher, tabular-nums); toast sukses dengan aksi eksplisit **"Input Lagi"** (tidak auto-reset — tetap dari V1.0)
 
 **FR-10: Kelola Kategori Pengeluaran**
@@ -333,6 +334,4 @@ KasSurs adalah aplikasi web sederhana berbasis mobile untuk mengelola kas bulana
 ---
 
 ## 🔄 Status
-PRD ini disusun berdasarkan seluruh keputusan yang telah dikonfirmasi dalam diskusi, termasuk 23 Functional Requirements (FR-22 menutup gap bootstrap admin pertama & proteksi last-admin-lockout; FR-23 menambahkan snapshot laporan beku — keputusan user 2026-09-01 sebelum Modul 6: laporan yang sudah di-export tidak boleh berubah nilai meski ada rapel/koreksi kemudian). Silakan review — jika ada koreksi, sampaikan sebelum lanjut ke Tech Spec.
-
-**Langkah selanjutnya:** `"Buat Tech Spec berdasarkan PRD yang sudah dibuat"`
+PRD V1.1 telah **disetujui** dan menjadi source of truth bersama (berdampingan dengan TECH-SPEC v1.6, 3-DESIGN V2.2, dan 3-TASKS). Amendemen terakhir: **2026-09-03** — FR-09 pemilihan kategori jadi grid 2 kolom + color dot (menggantikan keputusan chip pills 2026-09-02). Implementasi berjalan; rujukan task & progress ada di `.agents/3-TASKS.md` dan `.agents/HANDOFF.md`.

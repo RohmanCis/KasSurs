@@ -32,7 +32,7 @@ Buka `http://localhost:3100/login`. Admin: `081213024017` / PIN `000000`.
 | 2.1 | Lihat kartu saldo (TreasuryHero) | Saldo = total masuk − keluar, format Rp, angka rata (tabular) | |
 | 2.2 | Kartu "Belum Bayar" | Angka = anggota aktif belum bayar bulan ini | |
 | 2.3 | Refresh halaman | Tetap login (cookie 30 hari sliding), data sama | |
-| 2.4 | Cari tombol logout | — | ❌ Temuan #2 |
+| 2.4 | Cari tombol logout | — | ❌ Temuan #2 → FIXED |
 
 ## 3. Anggota (CRUD)
 
@@ -43,18 +43,19 @@ Buka `http://localhost:3100/login`. Admin: `081213024017` / PIN `000000`.
 | 3.3 | Tambah lagi no HP sama | Pesan no HP sudah terdaftar | |
 | 3.4 | Edit nama → Simpan | Nama berubah | |
 | 3.5 | Nonaktifkan anggota QA | Badge "Nonaktif", opasitas turun, tidak hilang dari list | |
-| 3.6 | Coba aktifkan kembali | — | ❌ Temuan #3 |
+| 3.6 | Coba aktifkan kembali | — | ❌ Temuan #3 → FIXED |
 
 ## 4. Catat Pembayaran
 
 | # | Aksi | Harusnya | Hasil |
 |---|---|---|---|
-| 4.1 | Tab **Pembayaran** | "QA Test" di atas (belum bayar duluan), periode = bulan ini | |
-| 4.2 | Ketik nama di search | List terfilter live | |
-| 4.3 | Tap nama → form expand | Prefill Rp 30.000 + tanggal hari ini | |
-| 4.4 | Ubah nominal → **Simpan** | Toast "tersimpan" + badge row jadi **Lunas**; toast TIDAK auto-hilang, ada **Input Lagi** | |
-| 4.5 | Tap nama yang sudah lunas | Pesan inline "Sudah lunas bulan ini" — bukan form | |
-| 4.6 | Geser periode ‹ bulan lalu → catat rapel | Bisa | |
+| 4.1 | Tab **Pembayaran** | "QA Test" di atas (belum bayar duluan), tampil periode bulan ini (switcher periode di halaman sudah dihapus — pindah bulan hanya via drawer) | perlu re-test V2.2 |
+| 4.2 | Ketik nama di search | List terfilter live | perlu re-test V2.2 |
+| 4.3 | Tap **TAP LUNAS** di kartu "QA Test" (Speed-Tap, FR-06) | 1-tap langsung lunas tanpa form: badge **Lunas** + toast undo 5 detik berisi aksi **BATALKAN** + haptic vibrate 45ms; toast TIDAK ada **Input Lagi** (itu hanya untuk pengeluaran) | perlu re-test V2.2 |
+| 4.4 | Dalam 5 detik, tap **BATALKAN** di toast | Pembayaran dibatalkan, badge kembali **Belum Bayar** | perlu re-test V2.2 |
+| 4.5 | Long-press (450 ms) kartu "QA Test" | Drawer rapel/sumbangan terbuka (dynamic import) — nominal bisa diubah & bulan lain dipilih DI DALAM drawer (pengganti geser periode ‹) | perlu re-test V2.2 |
+| 4.6 | Di drawer, simpan untuk bulan yang sudah lunas | 409 `ALREADY_PAID`: "Sudah lunas bulan ini" — bukan toast sukses | perlu re-test V2.2 |
+| 4.7 | Tap kartu anggota yang sudah **Lunas** | Drawer edit/hapus terbuka (FR-08); TIDAK ada form expand / pesan inline | perlu re-test V2.2 |
 
 ## 5. Pengeluaran
 
@@ -90,7 +91,7 @@ Buka `http://localhost:3100/login`. Admin: `081213024017` / PIN `000000`.
 
 ---
 
-## Temuan QA (2026-09-01)
+## Temuan QA (2026-09-01 — 2026-09-02)
 
 ### #1 — Login admin tidak langsung ke dashboard (FIXED, 2026-09-01)
 Setelah login sukses, `router.push("/")` → root "/" masih halaman stub statis. Admin harus tap Dashboard manual.
@@ -108,6 +109,14 @@ Nonaktifkan dulunya satu arah: `POST /api/members/[id]/deactivate` set `statusAk
 - Test: `tests/integration/members-reactivate.test.ts` (salt `t`) — 3 case: reaktivasi sukses + audit, penolakan `false` 400 + DB tak berubah, gabung `statusAktif+nama`.
 **Verifikasi:** vitest 138/138 (27 files), tsc clean, build pass.
 
+### #4 — Ring focus row /anggota persegi tajam tak selaras saat klik (FIXED, 2026-09-02)
+Ditemukan saat QA manual post-review V2.2 (testing user): ring fokus persegi tajam tidak selaras dengan kartu saat row anggota di `/anggota` di-klik.
+**Fix:** button row kini `rounded-[10px]` (12px kartu − 2px border) + `focus:` + `focus-visible:` — ring hanya muncul untuk navigasi keyboard (tidak flash saat tap). `anggota/page.tsx:436`.
+
+### #5 — Ikon search /pembayaran meleset ~7px (FIXED, 2026-09-02 — tidak terkait Speed-Tap)
+Ditemukan saat QA manual V2.2 tapi bukan regresi Speed-Tap: ikon search di `/pembayaran` meleset ~7px — efek samping fix wrapper (stretch 44px, input tetap py-1).
+**Fix:** input `h-full`, ikon `left-3 h-4 w-4 stroke-[2.5]`, input `pl-10`. Bonus: touch target search jadi 44px. `pembayaran/page.tsx:491,501`.
+
 ---
 
 ## Cara mencatat temuan QA berikutnya
@@ -115,14 +124,14 @@ Nonaktifkan dulunya satu arah: `POST /api/members/[id]/deactivate` set `statusAk
 Semua temuan QA dicatat langsung di file ini (dibaca otomatis oleh agent di sesi berikutnya — direferensikan AGENTS.md & HANDOFF.md). Template per temuan:
 
 ```markdown
-### #4 — <judul singkat> (OPEN, <tanggal>)
-**Langkah reproduksi:** <baris checklist mana — mis. "4.4" — + apa yang kamu lakukan>
+### #6 — <judul singkat> (OPEN, <tanggal>)
+**Langkah reproduksi:** <baris checklist mana — mis. "4.3" — + apa yang kamu lakukan>
 **Harusnya:** <perilaku yang diharapkan>
 **Terjadi:** <yang benar-benar terjadi — copy pesan error persis; screenshot ke .agents/screenshots/ kalau visual>
 ```
 
 Aturan singkat:
-- Satu temuan = satu section `### #N`, nomor lanjut dari terakhir (berikutnya #4).
+- Satu temuan = satu section `### #N`, nomor lanjut dari terakhir (berikutnya #6).
 - Status di judul: `OPEN` → agent konfirmasi & verifikasi kode → jadi `CONFIRMED, bug` / `BY DESIGN, bukan bug` / `FIXED <tanggal>`.
 - Boleh bahasa bebas/singkat — agent yang merapikan ke format saat triage.
 - Alternatif kalau tidak mau buka file: chat saja ke agent dengan format bebas ("QA temuan: ...") — agent yang akan mencatatnya ke sini.

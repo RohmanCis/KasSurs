@@ -1,6 +1,6 @@
 # Tech Spec: KasSurs
 
-**Versi:** 1.3 (update post-implementasi Modul 0–3, 2026-09-01)
+**Versi:** 1.6 (amendemen 2026-09-03 — sinkronisasi dokumentasi pasca-audit; riwayat versi di footer Status)
 **Status:** Implemented T-01–T-37 + Modul R (UI V2.2) — sisa T-38–T-39 (Deployment); detail state & gotchas lihat `.agents/HANDOFF.md`
 **Lokasi File:** `.agents/2-TECH-SPEC.md`
 **Dependensi:** `.agents/1-PRD.md` (wajib dibaca sebelum implementasi)
@@ -291,7 +291,7 @@ Admin login → sistem catat `LoginAttempt` → jika berhasil, buat session JWT 
 
 ## 📄 BAGIAN 3: Interface Design
 
-Next.js App Router — kombinasi Server Actions (untuk mutasi dari Server Components) dan Route Handlers (untuk kebutuhan yang perlu dipanggil dari client, seperti export). Berikut daftar API Route Handlers utama:
+Next.js App Router — semua mutasi data via Route Handlers (tidak ada Server Actions; nol `use server` di `src/`), sementara pembacaan memakai Server Components langsung atau Route Handler. Berikut daftar API Route Handlers utama:
 
 | Method | Path | Description | Auth |
 |--------|------|-------------|------|
@@ -309,7 +309,7 @@ Next.js App Router — kombinasi Server Actions (untuk mutasi dari Server Compon
 | POST | `/api/expenses` | Catat pengeluaran baru | Admin |
 | PATCH | `/api/expenses/[id]` | Edit data pengeluaran | Admin |
 | DELETE | `/api/expenses/[id]` | Hapus data pengeluaran | Admin |
-| GET | `/api/categories` | List kategori pengeluaran — jumlah item kecil (±5-10), ditampilkan sebagai **horizontal chip pills** (scroll horizontal, chip aktif inverted) di form pengeluaran (amendemen V1.1 2026-09-02, PRD FR-09 — menggantikan rencana dropdown native `<select>`; bukan search-select seperti anggota, karena skala item terlalu kecil untuk butuh search) | Admin |
+| GET | `/api/categories` | List kategori pengeluaran — jumlah item kecil (±5-10), ditampilkan sebagai **grid 2 kolom + color dot** di form pengeluaran (amendemen FR-09, 2026-09-03 — menggantikan chip pills horizontal V1.1; bukan search-select seperti anggota, karena skala item terlalu kecil untuk butuh search) | Admin |
 | POST | `/api/categories` | Tambah kategori baru | Admin |
 | GET | `/api/dashboard/summary` | Saldo real-time + ringkasan bulan berjalan | Admin (detail) / Anggota (ringkasan umum saja) |
 | GET | `/api/reports/pdf?bulan=&tahun=` | Unduh laporan PDF periode. **Snapshot (FR-23):** export pertama periode → hitung live + bekukan ke `ReportSnapshot`; export berikutnya periode sama → render dari snapshot (angka beku). `?regenerate=true` → hitung ulang + timpa snapshot (koreksi eksplisit admin) | Admin |
@@ -357,6 +357,7 @@ interface UpdateMemberRequest {
   nama?: string;
   noHp?: string;
   pin?: string; // jika diisi, reset PIN
+  statusAktif?: boolean; // reaktivasi anggota nonaktif (QA #3, 2026-09-01); hanya `true` diterima PATCH — penonaktifan wajib via /deactivate
 }
 
 // ===== Payment =====
@@ -579,10 +580,10 @@ Testing di V1 dibatasi ke **alur kritikal saja** — tidak menargetkan 100% cove
 - Audit log — pastikan setiap create/update/delete pada Payment/Expense benar-benar menghasilkan entry di `AuditLog`
 - RBAC middleware — pastikan role ANGGOTA ditolak (403) saat akses endpoint admin
 
-**E2E/Smoke Test (Playwright) — dibatasi 3 alur paling kritikal, bukan seluruh UI:**
-1. Login (admin & anggota) → sampai ke dashboard masing-masing
-2. Catat pembayaran end-to-end (pilih anggota → submit → verifikasi status berubah jadi Lunas)
-3. Export laporan (PDF & Excel) → verifikasi file ter-generate tanpa error
+**E2E/Smoke Test (Playwright) — 4 spec / 10 test, hanya alur paling kritikal, bukan seluruh UI:**
+1. Login (admin & anggota) → sampai ke dashboard masing-masing (`login.spec.ts`)
+2. Catat pembayaran Speed-Tap end-to-end termasuk undo/badge/drawer/cross-month 409 (`speed-tap.spec.ts`)
+3. Export laporan (PDF & Excel) → verifikasi file ter-generate tanpa error (`export-laporan.spec.ts`)
 
 **Tidak masuk scope testing otomatis V1:** visual regression testing, cross-browser testing matrix, load testing — semua ini over-engineering untuk skala 30 user; verifikasi manual sudah cukup jika dibutuhkan.
 
@@ -596,7 +597,7 @@ npm run test:e2e      # Playwright — smoke test (chromium ter-installed; webSe
 - `vitest.config` harus berekstensi **`.mts`** — `.ts` gagal ESM-in-CJS di Vitest 4.
 - tsconfig `target: es5` → tidak ada top-level await di test; pakai `beforeAll` + dynamic import (pattern ada di `tests/integration/login.test.ts`).
 - Test lockout `LoginAttempt`: `deleteMany` riwayat member dulu sebelum scenario — insert historis langsung ke DB bisa salah urutan kronologis vs attempt sukses dari test lain.
-- Utang test terjadwal T-35 (dari review M1): unit test alg-confusion JWT (`alg=none` + RS256-dengan-HS-secret → expect null), integration test 5x POST PIN salah nyata → POST ke-6 expect 429, unit test `lockedUntil` untuk >5 failure.
+- Utang test terjadwal T-35 (dari review M1) **sudah terlunasi** — ketiganya terimplementasi: unit test alg-confusion JWT → `tests/unit/jwt-confusion.test.ts`, integration test 5x POST PIN salah nyata → POST ke-6 expect 429 → `tests/integration/lockout-e2e.test.ts`, unit test `lockedUntil` untuk >5 failure → `tests/unit/rate-limit.test.ts`.
 
 
 
@@ -628,8 +629,10 @@ npm run dev
 ---
 
 ## 🔄 Status
+**Versi 1.6 (2026-09-03)** — sinkronisasi dokumentasi pasca-audit (statusAktif di UpdateMemberRequest, mutasi via Route Handlers tanpa Server Actions, E2E 4 spec/10 test, kategori grid 2 kolom).
+
 Versi 1.6 — di-update sesuai keputusan user 2026-09-01 sebelum Modul 6: **FR-23 Snapshot Laporan (laporan beku)** — tabel `report_snapshots` (payload `ReportSnapshotPayload` penuh: ringkasan + detail baris), 1 snapshot per `[bulan, tahun]`, dibuat saat export pertama, re-export periode sama render dari snapshot, `?regenerate=true` untuk koreksi; PDF & Excel bersumber satu snapshot; periode V1 bulan/tahun (rentang tanggal keluar dari V1). Semantik T-27 tidak berubah (accrual masuk / cash-flow keluar / saldo historis) — snapshot membekukan hasilnya. Perlu migration baru (`npx prisma migrate dev`).
 
-Versi 1.5 — di-update sesuai temuan implementasi Modul 5 (T-01–T-30 selesai: 92/92 test pass, build pass). Delta Modul 5: `GET /api/dashboard/summary` role-differentiated di handler (ANGGOTA sengaja lolos middleware — FR-14), `saldo`/`totalMasukBulanIni`/`totalKeluarBulanIni` agregat organisasi-wide identik lintas role, `jumlahBelumBayar` admin-only via field omission; semantik periode split — Payment accrual (kolom `bulan`/`tahun`) vs Expense cash-flow (rentang `tanggal`), `saldo` semua-histori otoritatif (oracle-approved, dipaksakan schema); BottomNav 4 tab menggantikan back-link manual; komponen reusable DataTable/FilterBar/StatusBadge (T-30) terpasang, konsumen pertama T-34. *(Catatan 2026-09-03: DataTable & StatusBadge kemudian DIHAPUS saat FASE-REDESIGN-3 cleanup — type `StatusBadgeStatus` dipindah ke FilterBar.tsx; BottomNav kini 5 tab.)* Progress terkini: `.agents/HANDOFF.md`.
+Versi 1.5 — di-update sesuai temuan implementasi Modul 5 (T-01–T-30 selesai: 92/92 test pass, build pass). Delta Modul 5: `GET /api/dashboard/summary` role-differentiated di handler (ANGGOTA sengaja lolos middleware — FR-14), `saldo`/`totalMasukBulanIni`/`totalKeluarBulanIni` agregat organisasi-wide identik lintas role, `jumlahBelumBayar` admin-only via field omission; semantik periode split — Payment accrual (kolom `bulan`/`tahun`) vs Expense cash-flow (rentang `tanggal`), `saldo` semua-histori otoritatif (oracle-approved, dipaksakan schema); BottomNav 4 tab menggantikan back-link manual; komponen reusable DataTable/FilterBar/StatusBadge (T-30) terpasang, konsumen pertama T-34. *(Catatan 2026-09-03: DataTable & StatusBadge kemudian DIHAPUS saat FASE-REDESIGN-3 cleanup — type `StatusBadgeStatus` dipindah ke FilterBar.tsx; BottomNav kini 5 tab.)* *(Angka test 92/92 sudah tergantikan — progress terkini 161/161, lihat `.agents/HANDOFF.md`.)* Progress terkini: `.agents/HANDOFF.md`.
 
 **Langkah berikutnya:** T-38–T-39 Deployment (Vercel env vars + `prisma migrate deploy` + `prisma db seed`) — detail di `.agents/HANDOFF.md` §4.

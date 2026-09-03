@@ -54,9 +54,11 @@ Palet flat (hex), bukan OKLCH. Hitam `#000000` adalah warna struktural (semua bo
 
 ## 3. Typography
 
-**Satu font tunggal: Bricolage Grotesque** (via `next/font/google`, subset weights 400/700/800, CSS variable `--font-bricolage`). Karakter grotesque-experimentalnya cocok dengan estetika brutalist; tetap legible untuk Bahasa Indonesia. Fallback: `system-ui, sans-serif`. (Amendemen FASE perf 2026-09-03: subset 3 weight — `font-medium`/`font-semibold`/`font-black` tidak di-load, class-nya dipetakan ke 400/700/800.)
+**Satu font tunggal: Bricolage Grotesque** (via `next/font/google`, subset weights 400/700/800, CSS variable `--font-bricolage`). Karakter grotesque-experimentalnya cocok dengan estetika brutalist; tetap legible untuk Bahasa Indonesia. Fallback: `system-ui, sans-serif`. (Amendemen FASE perf 2026-09-03: subset 3 weight — **hanya weight 400/700/800 yang di-load; class weight lain tidak dipakai**. `font-medium`/`font-semibold`/`font-black` tidak muncul di kode — audit grep 2026-09-03, seluruh pemakaian sudah di-snap ke bold/extrabold; tidak ada `fontWeight` extend di tailwind.config.ts.)
 
 **Font kedua: TIDAK ADA** (amendemen 2026-09-03 — JetBrains Mono dihapus dari project, ~25KB woff2 hanya terpakai 1x badge). Meta teknis/badge pakai Bricolage + `tabular-nums`, atau generic mono stack (`font-mono` → `ui-monospace`/`SFMono-Regular`/`Menlo`/`monospace`).
+
+**Pengecualian mono (keputusan implementasi 2026-09-03):** angka hero kartu "Belum Bayar N" di dashboard (`dashboard/page.tsx:76`) memakai `font-mono text-2xl font-extrabold tabular-nums` — generic mono stack (bukan font file tambahan), memberi karakter counter khas di satu-satunya angka hero halaman.
 
 | Item | Pilihan |
 |---|---|
@@ -90,13 +92,13 @@ Resep inti (semua border hitam `#000`):
 `border-[2.5px] border-black bg-neo-surface rounded-2xl shadow-neo` (varian besar) atau `border-2 rounded-xl shadow-neo-sm` (varian kecil/list item).
 
 ### 5.2 `neo-btn` — tombol
-`border-[2.5px] border-black rounded-xl font-bold shadow-neo transition-[transform,box-shadow,background-color,color] duration-100 select-none` + **press-down wajib:** `active:translate-x-[3.5px] active:translate-y-[3.5px] active:shadow-none`. Hover opsional: `hover:-translate-x-px hover:-translate-y-px` + shadow membesar. Durasi 100ms, easing `cubic-bezier(0.4,0,0.2,1)`. Semua tombol WAJIB punya feedback press-down — ini inti rasa "tactile". (Amendemen FASE perf 2026-09-03: `transition-all` → scoped `[transform,box-shadow,background-color,color]` — repaint turun, visual identik.)
+`border-[2.5px] border-black rounded-xl font-bold shadow-neo neo-press select-none` — **press-down wajib via utility plugin `neo-press`**: saat `:active` translate 3.5px + shadow-none, transition scoped transform/box-shadow/background-color/color 100ms (definisi di tailwind.config.ts plugins). Varian offset lebih kecil: `neo-press-md` (2.5px) & `neo-press-sm` (2px). Hover opsional: `hover:-translate-x-px hover:-translate-y-px` + shadow membesar (di-gate `[@media(hover:hover)]` di perangkat touch). Semua tombol WAJIB punya feedback press-down — ini inti rasa "tactile". **Aturan: JANGAN tulis blob `active:translate-*` + `active:shadow-none` manual — press-down wajib lewat utility `neo-press*`** (amendemen 2026-09-03: konsolidasi blob duplikat 13 site di 9 file jadi plugin — visual identik, repaint turun).
 
 ### 5.3 `neo-tag` — badge/label
 `border-2 border-black rounded-lg font-bold shadow-neo-sm px-2 py-0.5` + warna flat sesuai semantik (yellow=highlight, purple=label, pink=meta, green=lunas, coral=belum).
 
 ### 5.4 Roster card anggota (Speed-Tap)
-Resep persis mockup: `neo-member-card p-2.5 h-[72px] flex flex-col justify-between cursor-pointer border-[2.5px] border-black rounded-[14px] transition-[transform,box-shadow,background-color,color] duration-[120ms]` + press-down `active:translate-x-[2.5px] active:translate-y-[2.5px] active:shadow-none`. (Amendemen FASE perf 2026-09-03: `transition-all` → scoped — repaint turun, visual identik.)
+Resep persis implementasi: `p-2.5 h-[72px] flex flex-col justify-between cursor-pointer border-[2.5px] border-black rounded-[14px] neo-press neo-press-md select-none [touch-action:manipulation]` — press-down via utility `neo-press` + `neo-press-md` (offset 2.5px saat `:active`). Durasi transisi 100ms, konsisten dengan tombol lain. (Amendemen 2026-09-03: blob `active:translate-x-[2.5px]` manual + `duration-[120ms]` diganti utility — durasi 100ms, bukan 120ms; repaint turun, visual identik.)
 - **Belum bayar:** `bg-white shadow-neo hover:bg-neo-yellow` — ikon `clock` di badge coral, nominal "Rp 30k" slate, badge bawah `bg-neo-coral` teks **"TAP LUNAS"**.
 - **Lunas:** `bg-neo-green shadow-neo-sm` — ikon `check` di badge putih, badge bawah `bg-white` teks **"LUNAS (tgl)"**.
 - Ikon badge: lucide `check`/`clock`, `w-3 h-3 stroke-[3]`, di dalam kotak kecil `border border-black rounded`.
@@ -142,7 +144,7 @@ Speed-Tap 1-tap sengaja tanpa konfirmasi demi kecepatan; salah-tap dimitigasi 3 
     - Tengah (HANYA jika usia bayar < 10 menit): `<span class="pointer-events-none bg-neo-yellow border-1.5 border-black rounded px-1 text-[9px] font-extrabold uppercase shadow-neo-sm shrink-0">BARU</span>`
     - Kanan: kotak status ikon check/clock `shrink-0 p-0.5 border border-black rounded` (tidak berubah dari mockup)
   - Alasan posisi inline: menghindari tabrakan dengan ikon status kanan-atas DAN menghindari corner-straddle yang memicu tap collision antar kartu di grid `gap-2`. Badge `pointer-events-none` — seluruh kartu tetap satu tap target.
-  - Muncul INSTAN (tanpa delay animasi masuk; boleh popIn 200ms sekali) — kuning kontras di atas kartu hijau Lunas.
+  - Muncul INSTAN tanpa animasi (badge BARU tidak punya animasi masuk — `popIn` TIDAK diimplementasikan, lihat §6) — kuning kontras di atas kartu hijau Lunas.
   - Hilang saat: usia > 10 menit, atau kartu di-undo/dihapus. **PATCH edit TIDAK menghapus badge** (`createdAt` tidak berubah).
   - **Independen dari toast:** badge TIDAK ikut hilang saat toast 5 detik berakhir.
 - **c) Drawer Edit/Hapus (telat sadar):** tap kartu Lunas (lewat window undo) → bottom drawer `vaul` berisi detail payment + aksi **Edit** (PATCH, form prefill) + **Hapus** (DELETE + **konfirmasi destruktif** — sengaja beda dari undo toast yang tanpa konfirmasi). Catatan: drawer ini adalah **konsumen UI pertama** untuk PATCH/DELETE payment, dan `existingPaymentId` dari response `409 ALREADY_PAID` dapat dipakai deep-link langsung ke drawer ini.
@@ -164,7 +166,7 @@ Speed-Tap 1-tap sengaja tanpa konfirmasi demi kecepatan; salah-tap dimitigasi 3 
 Tidak ada lagi pola "tap nama → form expand in-place / accordion" (artefak v1.0, dihapus).
 
 **Alur Catat Pengeluaran:**
-1. Kategori via **Chip Pills** — **BUKAN native `<select>`**: Konsumsi, Acara, ATK, Sumbangan, Lain-lain (+ kategori custom). **Amendemen 2026-09-03: layout grid 2 kolom** (menggantikan horizontal scroll pills) dengan **color dot** kategori (`h-2 w-2 rounded-full border-[1.5px]`, inline style): Konsumsi `#86EFAC`, Acara `#FCA5A5`, ATK `#BAE6FD`, Sumbangan `#FED7AA`, Lain-lain `#DDD6FE`, kategori custom fallback `#F3F4F6` (sinkron token neo). Chip aktif = **inverted** `bg-black text-white font-extrabold` + dot kuning `#FEF08A`, press-down `shadow-[2.5px_2.5px_0_#000]` → `translate-[2.5px] shadow-none`, `min-h-[36px]`, `border-2 rounded-[10px]`. Tombol "Tambah Kategori Baru" `col-span-2` dashed `bg-neo-yellow`.
+1. Kategori via **Chip Pills** — **BUKAN native `<select>`**: Konsumsi, Acara, ATK, Sumbangan, Lain-lain (+ kategori custom). **Amendemen 2026-09-03: layout grid 2 kolom** (menggantikan horizontal scroll pills) dengan **color dot** kategori (`h-2 w-2 rounded-full border-[1.5px]`, inline style): Konsumsi `#86EFAC`, Acara `#FCA5A5`, ATK `#BAE6FD`, Sumbangan `#FED7AA`, Lain-lain `#DDD6FE`, kategori custom fallback `#F3F4F6` (sinkron token neo). Chip: `border-2 rounded-[10px] min-h-[36px] text-[11px] font-bold`, base `bg-white text-black shadow-[2.5px_2.5px_0_#000]`. **State terpilih** = **inverted** `bg-black text-white` + dot kuning `#FEF08A` + **translate permanen 2.5px** (`translate-x-[2.5px] translate-y-[2.5px]`) + `shadow-none`. **Keputusan implementasi 2026-09-03:** press chip memakai `neo-press` (translate 3.5px saat `:active`, offset sama dengan tombol lain) di atas shadow 2.5px, plus `transition-none` → press snap instan tanpa animasi, keputusan sadar (berbeda dari tombol form yang 100ms). Tombol "Tambah Kategori Baru" `col-span-2` dashed `bg-neo-yellow`.
 2. Nominal besar (input voucher `text-2xl font-extrabold tabular-nums`), deskripsi, tanggal (default hari ini, readonly-style `bg-neo-gray` + ikon calendar).
 3. Tombol "SIMPAN PENGELUARAN" `bg-neo-green` → toast sukses dengan aksi eksplisit "Input Lagi" (tidak auto-reset). Validasi `jumlah > 0` di client (toast "Nominal pengeluaran harus > 0") + server (Zod).
 
@@ -175,6 +177,11 @@ Tidak ada lagi pola "tap nama → form expand in-place / accordion" (artefak v1.
 ### 5.12 Target Performa (target desain, belum terukur)
 Sama seperti v1.0: FCP < 1.5s di 4G, filter client-side < 50ms, API CRUD < 500ms, JS halaman utama < 200KB gzip.
 
+### 5.13 FASE perf (2026-09-03) — First Load JS
+- `next.config.js`: `experimental.optimizePackageImports: ["lucide-react"]` — barrel-optimization otomatis Next (bukan tree-shake manual; import per-komponen tidak berubah).
+- `next/dynamic` untuk **PaymentRapelDrawer** + **PaymentEditDrawer** (`pembayaran/page.tsx:31-32`) — drawer ter-code-split dari bundle awal roster; type-only import `RapelInput` tetap static.
+- Tujuan: mengecilkan First Load JS halaman /pembayaran (roster Speed-Tap jadi render lebih cepat; drawer rapel/edit dimuat on-demand saat dibuka).
+
 ---
 
 ## 6. Motion & Animasi
@@ -183,23 +190,23 @@ Level: **ringan tapi tactile** — press-down adalah animasi utama, bukan transi
 
 | Interaksi | Animasi | Durasi | Easing |
 |---|---|---|---|
-| Tap/press tombol & card | translate +3.5px x/y, shadow hilang (roster card: +2.5px) | 100-120ms | `cubic-bezier(0.4,0,0.2,1)` |
+| Tap/press tombol & card | translate +3.5px x/y + shadow hilang via `neo-press` (roster card: +2.5px via `neo-press-md`) | 100ms | `cubic-bezier(0.4,0,0.2,1)` |
 | Hover tombol | translate -1px, shadow +1.5px | 100ms | sama |
 | Speed-tap sukses | `navigator.vibrate(45)` + kartu flip hijau + undo toast 5s | instan | — |
 | Speed-tap undo/batal | `navigator.vibrate([30, 40, 30])` + kartu rollback + toast konfirmasi | instan | — |
 | Drawer (vaul) | slide-up dari bawah + backdrop fade | 200ms | `ease-out` |
 | Toast masuk | slide-down dari atas + fade | 200ms | `ease-out` |
-| Badge/status pop (lunas baru) | scale 0.8→1 + rotate -4°→0 (`popIn`) | 200ms | `cubic-bezier(0.175,0.885,0.32,1.275)` |
+| Badge BARU (lunas baru) | **TIDAK diimplementasikan** — badge BARU muncul tanpa animasi (keputusan sadar; bukan spesifikasi aktif) | — | — |
 | Progress bar update | width transition | 300ms | default |
 | Error field | shake halus + toast coral | 150ms | `ease-in-out` |
 | Modal | fade backdrop + slide-up dari bawah | 200ms | `ease-out` |
 
 **Aturan:**
 - Semua < 300ms. Tidak ada animasi dekoratif (parallax, partikel).
-- Press-down (`active:translate + shadow-none`) TIDAK BOLEH dihapus — itu signature interaksi neo-brutalist.
+- Press-down (`neo-press*` utility) TIDAK BOLEH dihapus — itu signature interaksi neo-brutalist; wajib via utility, jangan tulis ulang blob `active:translate` manual (lihat 5.2).
 - Hormati `prefers-reduced-motion` (sudah ada di globals.css — pertahankan).
 
-**Implementasi:** Tailwind transitions + CSS keyframes kecil (popIn). Library tambahan hanya **sonner** (toast) dan **vaul** (drawer/modal mobile) — tidak perlu Framer Motion.
+**Implementasi:** Tailwind transitions + keyframe `shake` di globals.css (error field). Library tambahan hanya **sonner** (toast) dan **vaul** (drawer/modal mobile) — tidak perlu Framer Motion.
 
 ---
 
@@ -209,7 +216,7 @@ Level: **ringan tapi tactile** — press-down adalah animasi utama, bukan transi
 - Status tidak pernah hanya warna — selalu ada teks ("✓ Lunas", "Belum", "Tap Rp 30k").
 - Tap target ≥ 44×44px (tombol full-width `py-3.5`, roster card `p-3`, chip filter `min-h-[44px]`; bottom bar — amendemen 2026-09-03: `h-16` fixed → `py-2` auto-height + `pb-[env(safe-area-inset-bottom)]` tetap dipertahankan, tinggi link tetap `min-h-[44px]`; chip kategori pengeluaran kini `min-h-[36px]` sejak amendemen grid 2-col — **keputusan sadar user 2026-09-03 demi UX**, di bawah 44px, jangan dinaikkan tanpa arahan).
 - Label form selalu terlihat (uppercase font-extrabold di atas input), bukan placeholder-only.
-- `prefers-reduced-motion` menonaktikkan popIn/shake/press-translate.
+- `prefers-reduced-motion` menonaktikkan shake/press-translate.
 - Border tebal justru membantu low-vision: batas elemen selalu eksplisit.
 - Roster card keyboard-accessible (amendemen 2026-09-02): `tabIndex={0}` + Enter/Space → onTap + `focus-visible:ring-2 ring-inset ring-black`. Long-press (drawer rapel) tetap eksklusif pointer.
 
@@ -217,7 +224,7 @@ Level: **ringan tapi tactile** — press-down adalah animasi utama, bukan transi
 
 ## 8. Referensi Implementasi
 
-Token terdaftar di `tailwind.config.ts` (token lama v1.0 OKLCH/canvas/surface/primary SUDAH DIHAPUS pasca FASE-3 — UI neo-only):
+Token terdaftar di `tailwind.config.ts` (token lama v1.0 OKLCH/canvas/surface/primary SUDAH DIHAPUS pasca FASE-3 — UI neo-only). Isi blok di bawah (colors/boxShadow/borderWidth/fontFamily/plugins) sinkron dengan tailwind.config.ts aktual:
 
 ```ts
 colors: {
@@ -239,6 +246,20 @@ fontFamily: {
   sans: ["var(--font-bricolage)", "system-ui", "sans-serif"],
   mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
 },
+plugins: [
+  plugin(({ addComponents }) => {
+    addComponents({
+      // press-down neo-brutalist — konsolidasi blob duplikat (review 2026-09-03)
+      ".neo-press": {
+        transitionProperty: "transform, box-shadow, background-color, color",
+        transitionDuration: "100ms",
+        "&:active": { transform: "translate(3.5px, 3.5px)", boxShadow: "none" },
+      },
+      ".neo-press-md": { "&:active": { transform: "translate(2.5px, 2.5px)" } },
+      ".neo-press-sm": { "&:active": { transform: "translate(2px, 2px)" } },
+    });
+  }),
+],
 ```
 
 Utility class gabungan via `clsx` + `tailwind-merge` (`cn()` helper). Dependencies UI: `lucide-react` (ikon), `sonner` (toast), `vaul` (drawer), `clsx`, `tailwind-merge`.

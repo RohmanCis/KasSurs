@@ -2,8 +2,8 @@
 
 // =====================================================================
 // KasSurs — Form Catat Pengeluaran (FR-09/10 V1.1 — Neo-Brutalism V2.2)
-// - Kategori: HORIZONTAL CHIP PILLS scroll (aktif inverted bg-black
-//   text-white) — GANTI native <select> (amendemen FR-09). Chip "+ Baru"
+// - Kategori: GRID 2-COL + COLOR DOT (amendemen FR-09, 2026-09-03; terpilih
+//   inverted bg-black text-white) — GANTI native <select>. Chip "+ Baru"
 //   membuka input inline kategori custom (POST /api/categories, FR-10).
 // - Nominal besar voucher text-2xl font-extrabold tabular-nums; tanggal
 //   default hari ini (date-only YYYY-MM-DD, kontrak T-20/T-24).
