@@ -48,7 +48,7 @@ export default function BottomNav() {
     <nav
       aria-label="Navigasi utama"
       data-testid="bottom-nav"
-      className="fixed inset-x-0 bottom-0 z-40 border-t-3 border-black bg-neo-surface"
+      className="fixed inset-x-0 bottom-0 z-40 border-t-3 border-black bg-neo-surface pb-[env(safe-area-inset-bottom)]"
     >
       <ul className="mx-auto flex w-full max-w-[430px] items-center justify-around px-2 py-2 md:max-w-2xl">
         {TABS.map((tab) => {

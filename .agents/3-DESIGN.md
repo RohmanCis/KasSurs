@@ -207,7 +207,7 @@ Level: **ringan tapi tactile** — press-down adalah animasi utama, bukan transi
 
 - Kontras WCAG AA: teks selalu hitam di atas warna flat terang (semua warna neo L tinggi — hitam di atasnya > 7:1); teks putih hanya di atas hitam pekat. Teks berwarna (`neo-darkgreen`/`neo-darkred`) hanya untuk nominal di atas putih.
 - Status tidak pernah hanya warna — selalu ada teks ("✓ Lunas", "Belum", "Tap Rp 30k").
-- Tap target ≥ 44×44px (tombol full-width `py-3.5`, roster card `p-3`, chip filter `min-h-[44px]`; bottom bar — amendemen 2026-09-03: `h-16` fixed → `py-2` auto-height, `pb-[env(safe-area-inset-bottom)]` DIHAPUS, tinggi link tetap `min-h-[44px]`; chip kategori pengeluaran kini `min-h-[36px]` sejak amendemen grid 2-col — di bawah 44px, diterima karena aksi non-destruktif dan lingkup form).
+- Tap target ≥ 44×44px (tombol full-width `py-3.5`, roster card `p-3`, chip filter `min-h-[44px]`; bottom bar — amendemen 2026-09-03: `h-16` fixed → `py-2` auto-height + `pb-[env(safe-area-inset-bottom)]` tetap dipertahankan, tinggi link tetap `min-h-[44px]`; chip kategori pengeluaran kini `min-h-[36px]` sejak amendemen grid 2-col — **keputusan sadar user 2026-09-03 demi UX**, di bawah 44px, jangan dinaikkan tanpa arahan).
 - Label form selalu terlihat (uppercase font-extrabold di atas input), bukan placeholder-only.
 - `prefers-reduced-motion` menonaktikkan popIn/shake/press-translate.
 - Border tebal justru membantu low-vision: batas elemen selalu eksplisit.
