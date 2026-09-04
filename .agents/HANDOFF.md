@@ -2,7 +2,15 @@
 
 Handoff ramping: **keputusan mengikat → open tasks → issue/tech debt**. Detail eksekusi & history lengkap: git history + AGENTS.md.
 
-**Status proyek:** T-01 s.d. T-37 + Modul R (UI V2.2) + semua batch polish/review/audit SELESAI. Sisa: T-38–T-39 Deployment. Verifikasi terakhir (2026-09-04): tsc clean, build OK, **E2E 10/10** (4 spec), **Vitest 161/161** (29 files, 2026-09-04 — utang verifikasi batch 2026-09-04 LUNAS). Tidak ada utang verifikasi tersisa.
+**Status proyek:** SELURUH TASK SELESAI (T-01–T-39 + Modul R). **GO-LIVE PRODUCTION 2026-09-04: https://kas-surs.vercel.app** — Vercel (T-38) + migrate/seed (T-39) + cleanup DB prod + saldo awal + smoke 5/5 halaman OK. Verifikasi terakhir (2026-09-04): tsc clean, build OK, **E2E 10/10** (4 spec), **Vitest 161/161** (29 files). Tidak ada utang verifikasi tersisa.
+
+### Fakta production (2026-09-04)
+- DB prod = project Supabase yang sama dengan dev (keputusan user). **Wiped bersih saat go-live**: hanya tersisa 1 member Admin (`081213024017` / PIN `000000`) + 6 kategori default. Semua data test dev DIHAPUS PERMANEN.
+- **Saldo awal (base):** 1 payment rapel Rp3.710.300 — Admin, Sep 2026, `2026-09-04`, id `cmtmdbbwg000444fnca426v82` (metode: base tanpa history, keputusan user). Saldo kini dihitung dari titik ini.
+- JWT_SECRET prod = sama dengan dev (keputusan user). Env Vercel: `DATABASE_URL` (pooler 6543), `DIRECT_URL` (session pooler 5432), `JWT_SECRET`, `SEED_ADMIN_PHONE/PIN`, `TZ` tidak diset.
+- `postinstall: prisma generate` ditambahkan ke package.json (`202469a`) — wajib untuk build Vercel fresh install.
+- Smoke prod 2026-09-04: login API 200 + UI redirect /dashboard, saldo tampil Rp 3.710.300, /pembayaran (kartu LUNAS + badge BARU), /anggota (1/1 lunas), /pengeluaran (form + empty state), /laporan (export PDF/Excel) — semua OK.
+- Minor open: favicon 404 (cosmetic). RBAC 403 tidak di-smoke manual (tidak ada member ANGGOTA di prod) — tercover vitest middleware.
 
 ---
 
@@ -41,7 +49,12 @@ Handoff ramping: **keputusan mengikat → open tasks → issue/tech debt**. Deta
 
 ## 2. Open tasks (urutan)
 
-1. **T-38–T-39 Deployment** — Vercel env vars (`DATABASE_URL` pooler 6543, `DIRECT_URL` session-mode pooler 5432 — pola gotcha #2 AGENTS.md, `JWT_SECRET`, `SEED_ADMIN_*`) → `prisma migrate deploy` + `prisma db seed`. Opsional: `TZ=Asia/Jakarta` di Vercel (todayISO sudah WIB-safe; TZ hanya guard kode baru yang lupa pakai format.ts).
+Tidak ada — proyek go-live 2026-09-04. Kandidat lanjutan (menunggu arahan user, jangan kerjakan tanpa arahan):
+
+- Ganti PIN admin prod dari `000000` (rekomendasi keamanan pasca go-live).
+- Tambah anggota asli organisasi via /anggota, lalu praktik tagih September.
+- Favicon (minor 404).
+- Keyboard path rapel /pembayaran (kandidat lama).
 
 ---
 

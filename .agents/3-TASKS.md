@@ -489,9 +489,9 @@
 - **Deskripsi:** Hubungkan repo ke Vercel, set environment variables (DATABASE_URL, DIRECT_URL, JWT_SECRET, SEED_ADMIN_PHONE, SEED_ADMIN_PIN), verifikasi auto-deploy dari branch `main`.
 - **Modul:** Deployment
 - **Prioritas:** High
-- **Status:** Todo
+- **Status:** Done
 - **Dependensi:** T-35, T-36
-- **Tanggal:** 2026-08-30
+- **Tanggal:** 2026-08-30 — selesai 2026-09-04
 - **Estimasi:** 1 jam
 - **File yang diubah:** Vercel dashboard config (bukan file kode)
 
@@ -500,9 +500,9 @@
 - **Deskripsi:** `prisma migrate deploy` + `prisma db seed` di environment production Supabase — buat akun admin pertama nyata.
 - **Modul:** Deployment
 - **Prioritas:** High
-- **Status:** Todo
+- **Status:** Done
 - **Dependensi:** T-38, T-14
-- **Tanggal:** 2026-08-30
+- **Tanggal:** 2026-08-30 — selesai 2026-09-04
 - **Estimasi:** 0.5 jam
 - **File yang diubah:** -
 
@@ -575,4 +575,4 @@
 ## 🔄 Status
 Task list ini disusun dari `.agents/2-TECH-SPEC.md` yang sudah lengkap (API contract types + testing strategy), sehingga tiap task punya kontrak field yang jelas untuk dikerjakan tanpa tebak-tebak antar sesi. Dependensi diurutkan: Setup → Auth (termasuk bootstrap admin FR-22) → Member → Payment/Expense → Dashboard → Reports → Testing → Deployment.
 
-**Langkah selanjutnya:** T-38–T-39 (Deployment). Detail state: `.agents/HANDOFF.md`.
+**Langkah selanjutnya:** Tidak ada — seluruh 39 task (T-01–T-39) + Modul R SELESAI. KasSurs live di production: https://kas-surs.vercel.app (go-live 2026-09-04). Detail state: `.agents/HANDOFF.md`.
