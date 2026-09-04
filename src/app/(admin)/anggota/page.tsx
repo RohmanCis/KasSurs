@@ -78,7 +78,7 @@ export default function AnggotaPage() {
           return;
         }
         if (!res.ok) {
-          setLoadError("Gagal memuat data anggota. Coba lagi.");
+          setLoadError("Gagal Memuat Data Dogs. Coba Lagi.");
           return;
         }
         setMembers((await res.json()) as MemberDTO[]);
@@ -240,7 +240,7 @@ export default function AnggotaPage() {
           (mockup tak punya subscreen ini; purple = warna meta/label) */}
       <header className="flex items-center justify-between border-b-[2.5px] border-black bg-neo-purple px-4 py-2.5">
         <div>
-          <h1 className="text-xs font-extrabold uppercase text-black">Manajemen Anggota</h1>
+          <h1 className="text-xs font-extrabold uppercase text-black">Management Dog</h1>
           <p className="text-xs font-bold tracking-tight text-slate-800">
             Kelola anggota & status bayar mereka.
           </p>
@@ -318,7 +318,7 @@ export default function AnggotaPage() {
             data-testid="anggota-tambah-button"
           >
             <span className="flex items-center justify-center gap-1.5">
-              <UserPlus className="h-4 w-4 stroke-[2.5]" aria-hidden="true" /> Tambah Anggota
+              <UserPlus className="h-4 w-4 stroke-[2.5]" aria-hidden="true" /> Tambah Dog Baru
             </span>
           </NeoButton>
         )}
@@ -336,7 +336,7 @@ export default function AnggotaPage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Ketik nama atau nomor HP..."
-              aria-label="Cari anggota"
+              aria-label="Cari Dogs"
               data-testid="anggota-search"
               className="w-full rounded-xl border-[2.5px] border-black bg-white py-2 pl-8 pr-2 text-xs font-bold text-black shadow-neo-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-neo-yellow"
             />
@@ -355,7 +355,7 @@ export default function AnggotaPage() {
 
         {/* Loading — skeleton border hitam + pulse (5.11) */}
         {loading && (
-          <div className="space-y-2" aria-busy="true" aria-label="Memuat daftar anggota">
+          <div className="space-y-2" aria-busy="true" aria-label="Memuat Daftar Dogs..">
             {Array.from({ length: 5 }).map((_, i) => (
               <div
                 key={i}

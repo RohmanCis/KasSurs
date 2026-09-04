@@ -272,7 +272,7 @@ test("5. filter chip Belum + pencarian nama (gabungan FR-07)", async ({ page }) 
   // sudah di-filter chip, kartu Belum tidak cocok dengan nama itu)
   await page.getByTestId("search-anggota").fill(anggotaLunas.nama);
   await expect(cardBelum).not.toBeVisible();
-  await expect(page.getByText(/Tidak ada anggota cocok/)).toBeVisible();
+  await expect(page.getByText(/Gada Anggota yang cocok nih dengan/)).toBeVisible();
 
   // Pindah chip "Semua" (search tetap) → kartu Lunas muncul lagi
   await page.getByTestId("chip-filter-semua").click();

@@ -502,8 +502,8 @@ export default function PembayaranPage() {
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari nama..."
-              aria-label="Cari nama anggota"
+              placeholder="Cari Dog.."
+              aria-label="Cari Nama Dog"
               data-testid="search-anggota"
               className="h-full w-full rounded-xl border-[2.5px] border-black bg-white py-1 pl-10 pr-2 text-xs font-bold text-black shadow-neo-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-neo-yellow"
             />
@@ -535,7 +535,7 @@ export default function PembayaranPage() {
         {!loading && !loadError && tampil.length === 0 && (
           <p className="rounded-xl border-[2.5px] border-black bg-white p-6 text-center text-xs font-bold text-slate-600 shadow-neo-sm">
             {search.trim()
-              ? `Tidak ada anggota cocok dengan "${search.trim()}".`
+              ? `Gada Anggota yang cocok nih dengan "${search.trim()}".`
               : filter === "belum"
                 ? "Semua anggota aktif sudah lunas bulan ini."
                 : "Belum ada anggota aktif."}

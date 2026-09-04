@@ -28,11 +28,11 @@ type FormState =
 
 function pesanLockout(lockedUntil?: string): string {
   if (!lockedUntil) {
-    return "Akun terkunci sementara karena terlalu banyak salah PIN. Coba lagi nanti.";
+    return "Akun Lu Ke Lock Soalnya lu Kaya Dog...";
   }
   const sisaMs = new Date(lockedUntil).getTime() - Date.now();
   const sisaMenit = Math.max(1, Math.ceil(sisaMs / 60000));
-  return `Terlalu banyak salah PIN. Akun terkunci sementara — coba lagi dalam ${sisaMenit} menit.`;
+  return `Kebanyakan salah pin nih amit dah coba lagi ntar ${sisaMenit} menit.`;
 }
 
 export default function LoginForm() {
@@ -100,18 +100,18 @@ export default function LoginForm() {
       if (res.status === 429 || data.error === "ACCOUNT_LOCKED") {
         setState({ status: "error", pesan: pesanLockout(data.lockedUntil), lockout: true });
       } else if (res.status === 401 || data.error === "INVALID_CREDENTIALS") {
-        setState({ status: "error", pesan: "Nomor HP atau PIN salah.", lockout: false });
+        setState({ status: "error", pesan: "Yang Betul Dog NO HP ama PIN salah itu..", lockout: false });
       } else {
         setState({
           status: "error",
-          pesan: data.message || "Periksa kembali nomor HP dan PIN kamu.",
+          pesan: data.message || "Cek Lagi Nomor HP sama PIN lu Dog.",
           lockout: false,
         });
       }
     } catch {
       setState({
         status: "error",
-        pesan: "Tidak bisa terhubung ke server. Periksa koneksi, lalu coba lagi.",
+        pesan: "Koneksi Error",
         lockout: false,
       });
     }
@@ -139,7 +139,7 @@ export default function LoginForm() {
         >
           <div className="flex items-center gap-2 font-extrabold text-xs uppercase">
             <ShieldAlert className="w-4 h-4 stroke-[2.5] text-neo-darkred" aria-hidden="true" />
-            {state.lockout ? "Peringatan Lockout (5x Salah)" : "Login Gagal"}
+            {state.lockout ? "5x Salah PIN Akun Ke Lock Dog..." : "Login Gagal"}
           </div>
           <p className="text-[11px] font-bold text-slate-900 mt-1">{state.pesan}</p>
         </div>
@@ -181,7 +181,7 @@ export default function LoginForm() {
           htmlFor="pin-0"
           className="text-[11px] font-extrabold uppercase tracking-wider text-black"
         >
-          PIN Keamanan (4-6 Digit)
+          PIN (4-6 Digit)
         </label>
         <div className="grid grid-cols-6 gap-1.5" role="group" aria-label="PIN 6 digit">
           {digits.map((d, i) => (
@@ -211,7 +211,7 @@ export default function LoginForm() {
           ))}
         </div>
         <p className="mt-1 text-[10px] font-bold text-slate-600">
-          Lupa PIN? Hubungi bendahara untuk reset.
+          Lupa PIN? Kontek Basith ya Dog biar di reset.
         </p>
       </div>
 
@@ -225,7 +225,7 @@ export default function LoginForm() {
         className="mt-2 tracking-wide uppercase"
       >
         <span className="flex items-center justify-center gap-2">
-          {loading ? "Memeriksa..." : "Masuk"}
+          {loading ? "Tunggu Dog.." : "Masuk"}
           <ArrowRight className="w-4 h-4 stroke-[3]" aria-hidden="true" />
         </span>
       </NeoButton>

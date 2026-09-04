@@ -26,7 +26,7 @@ export default function LoginPage() {
         />
         <h1 className="text-2xl font-extrabold tracking-tight text-black">KasSurs.</h1>
         <p className="mt-0.5 text-xs font-bold text-slate-700">
-          Sistem Kas Organisasi — masuk dengan nomor HP dan PIN kamu.
+          Sistem Kas Grup D TFI - Login Pakai No HP dan PIN ya Dogs...
         </p>
       </div>
       <LoginForm />
