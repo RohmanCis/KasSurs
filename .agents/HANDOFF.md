@@ -2,7 +2,7 @@
 
 Handoff ramping: **keputusan mengikat → open tasks → issue/tech debt**. Detail eksekusi & history lengkap: git history + AGENTS.md.
 
-**Status proyek:** T-01 s.d. T-37 + Modul R (UI V2.2) + semua batch polish/review/audit SELESAI. Sisa: vitest batch 2026-09-04 + T-38–T-39 Deployment. Verifikasi terakhir (2026-09-04): tsc clean, build OK, **E2E 10/10** (4 spec). **Vitest 161/161 terakhir 2026-09-03 — batch 2026-09-04 belum di-vitest (satu-satunya utang verifikasi).**
+**Status proyek:** T-01 s.d. T-37 + Modul R (UI V2.2) + semua batch polish/review/audit SELESAI. Sisa: T-38–T-39 Deployment. Verifikasi terakhir (2026-09-04): tsc clean, build OK, **E2E 10/10** (4 spec), **Vitest 161/161** (29 files, 2026-09-04 — utang verifikasi batch 2026-09-04 LUNAS). Tidak ada utang verifikasi tersisa.
 
 ---
 
@@ -41,8 +41,7 @@ Handoff ramping: **keputusan mengikat → open tasks → issue/tech debt**. Deta
 
 ## 2. Open tasks (urutan)
 
-1. **Vitest batch 2026-09-04** — `docker start kassurs-test-db` + `npm run test`. (E2E sudah 10/10; ini satu-satunya utang verifikasi.)
-2. **T-38–T-39 Deployment** — Vercel env vars (`DATABASE_URL` pooler 6543, `DIRECT_URL` session-mode pooler 5432 — pola gotcha #2 AGENTS.md, `JWT_SECRET`, `SEED_ADMIN_*`) → `prisma migrate deploy` + `prisma db seed`. Opsional: `TZ=Asia/Jakarta` di Vercel (todayISO sudah WIB-safe; TZ hanya guard kode baru yang lupa pakai format.ts).
+1. **T-38–T-39 Deployment** — Vercel env vars (`DATABASE_URL` pooler 6543, `DIRECT_URL` session-mode pooler 5432 — pola gotcha #2 AGENTS.md, `JWT_SECRET`, `SEED_ADMIN_*`) → `prisma migrate deploy` + `prisma db seed`. Opsional: `TZ=Asia/Jakarta` di Vercel (todayISO sudah WIB-safe; TZ hanya guard kode baru yang lupa pakai format.ts).
 
 ---
 
