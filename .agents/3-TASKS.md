@@ -1,7 +1,7 @@
 ﻿# TASKS: KasSurs
 
 **Versi:** 1.2 (2026-09-03 — status sync pasca deepening #3/#4, API Handler Kit #1, code-review fix batch, UI polish & perf batch)
-**Catatan 2026-09-04:** fitur FR-24 WA reminder shipped TANPA task ID formal (eksklusif /anggota; `toWaNumber`+`waReminderUrl` di `src/lib/format.ts`); sesi lanjutan same-day: Impeccable critique 30/40 + 5 fix P1/P2 + redesign row anggota (Opsi A) + resize caption hint — build clean, vitest/E2E belum.
+**Catatan 2026-09-04:** fitur FR-24 WA reminder shipped TANPA task ID formal (eksklusif /anggota; `toWaNumber`+`waReminderUrl` di `src/lib/format.ts`); sesi lanjutan same-day: Impeccable critique 30/40 + 5 fix P1/P2 + redesign row anggota (Opsi A) + resize caption hint — build clean; **E2E 10/10 (2026-09-04, pasca flaky fix globalSetup purge); vitest masih utang**.
 **Lokasi File:** `.agents/3-TASKS.md`
 **Dependensi:** `.agents/1-PRD.md`, `.agents/2-TECH-SPEC.md`, `.agents/3-DESIGN.md`
 **Skenario:** Project baru (tidak ada boilerplate) + Tech Spec lengkap → mulai dari T-01 Setup Project

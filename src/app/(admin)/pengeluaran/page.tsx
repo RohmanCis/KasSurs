@@ -24,8 +24,8 @@ import { NAMA_BULAN, formatRupiah, formatTanggal } from "@/lib/format";
 
 // Gaya tombol aksi toast sonner (Toaster unstyled — styling per-toast).
 const NEO_ACTION_STYLE: CSSProperties = {
-  background: "#000000",
-  color: "#FEF08A",
+  background: "#FFFFFF",
+  color: "#000000",
   border: "2px solid #000000",
   borderRadius: 8,
   fontWeight: 800,

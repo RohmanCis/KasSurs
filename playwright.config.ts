@@ -12,8 +12,12 @@ const TEST_DATABASE_URL = "postgresql://postgres:kassurs_test@localhost:5433/pos
 
 export default defineConfig({
   testDir: './tests/e2e',
+  // Bersihkan data sisa "E2E ..." dari test DB (roster /pembayaran membesar
+  // & memperlambat drawer) sebelum setiap run.
+  globalSetup: './tests/e2e/global-setup.ts',
   fullyParallel: true,
   reporter: 'list',
+  timeout: 60_000, // test terberat (drawer multi-interaksi) + dev-mode cold-compile + roster besar bisa >30s
   expect: { timeout: 15_000 }, // dev-mode cold-compile route bisa > default 5s
   use: {
     baseURL: 'http://localhost:3100',
