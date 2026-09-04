@@ -16,3 +16,9 @@ test-results/
 *.tsbuildinfo
 next-env.d.ts
 .playwright-mcp/
+# Internal agent docs — tidak di-push
+.agents/
+.impeccable/
+AGENTS.md
+UI-COPY.md
+.opencode/
