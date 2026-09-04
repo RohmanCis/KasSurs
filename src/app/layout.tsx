@@ -14,6 +14,10 @@ const bricolage = Bricolage_Grotesque({
 export const metadata: Metadata = {
   title: "KasSurs",
   description: "Aplikasi kas bulanan organisasi",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

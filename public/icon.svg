@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+<rect width="1024" height="1024" rx="150" fill="#86EFAC" stroke="#000" stroke-width="32"/>
+<!-- offset shadow -->
+<path d="M186 488 Q186 430 244 430 H780 Q838 430 838 488 V760 Q838 818 780 818 H244 Q186 818 186 760Z" fill="#000"/>
+<path d="M164 466 Q164 408 222 408 H758 Q816 408 816 466 V738 Q816 796 758 796 H222 Q164 796 164 738Z" fill="#FFFDF0" stroke="#000" stroke-width="28"/>
+<!-- wallet slot -->
+<rect x="224" y="470" width="530" height="74" rx="24" fill="#000"/>
+<!-- coin -->
+<circle cx="512" cy="366" r="190" fill="#000"/>
+<circle cx="512" cy="366" r="158" fill="#FEF08A" stroke="#000" stroke-width="18"/>
+<text x="512" y="425" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="180" font-weight="900" fill="#000">Rp</text>
+<!-- coin rays -->
+<path d="M512 72V130 M330 116L372 158 M694 116L652 158" stroke="#000" stroke-width="28" stroke-linecap="round"/>
+<!-- lightning bolt -->
+<path d="M548 488 L430 688 H530 L458 930 L718 628 H610 L690 488 Z" fill="#000"/>
+<path d="M552 506 L462 650 H566 L510 838 L676 610 H582 L650 506 Z" fill="#FEF08A"/>
+</svg>
