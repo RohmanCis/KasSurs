@@ -1,10 +1,11 @@
 # PRD: KasSurs
 
-**Versi:** 1.1
+**Versi:** 1.2
 **Status:** Aktif — amendemen redesign UI disetujui
 **Lokasi File:** `.agents/1-PRD.md`
 
 **Changelog:**
+- **1.2 (2026-09-04):** **FR-24 BARU — Pengingat WhatsApp (WA Reminder)** (Modul 8): tombol "WA" deep-link `wa.me` di /anggota (row) — scope disempitkan dari rencana awal /pembayaran, amendemen sesi lanjutan 2026-09-04 — untuk anggota aktif Belum Bayar; pesan template terisi otomatis; nomor dikonversi ke format 62. Murni client-side, tanpa API/schema baru. Total FR 23 → **24**.
 - **1.1 (2026-09-03):** Amendemen minor FR-09 — pemilihan kategori pengeluaran dari **horizontal chip pills** (keputusan 2026-09-02) menjadi **grid 2 kolom + color dot** (selaras 3-DESIGN V2.2). Murni lapisan presentasi; tidak mengubah endpoint/API/scope.
 - **1.1 (2026-09-02):** Amendemen alur catat pembayaran untuk UI Neo-Brutalism V2.2 (Speed-Tap). **FR-06 mayor** (rewrite: 2 mode input — 1-Tap Speed-Tap default + drawer rapel via long-press, mitigasi salah-tap 3 lapis). **FR-07/08/09/12/14 minor** (search + chip filter gabungan; drawer edit/hapus jadi UI konsumen FR-08; kategori chip pills bukan dropdown; progress bar dashboard; kupon + matriks 12 bulan /status).
 - **1.0:** Baseline awal (23 FR, termasuk FR-22 bootstrap admin, FR-23 snapshot laporan — amendemen 2026-09-01).
@@ -269,7 +270,15 @@ KasSurs adalah aplikasi web sederhana berbasis mobile untuk mengelola kas bulana
 - **Output:** Laporan per periode yang nilainya permanen — tidak berubah diam-diam meski ada rapel, edit, atau penghapusan transaksi setelahnya; laporan yang sudah dibagikan ke anggota tetap cocok dengan re-export di masa depan
 - **Aturan Bisnis:** 1 snapshot per periode (unique bulan+tahun); dibuat hanya saat export pertama periode itu (bukan otomatis tiap akhir bulan); hitung ulang hanya lewat aksi eksplisit admin (parameter `regenerate` — untuk koreksi salah input); kalkulasi yang dibekukan tetap memakai semantik yang disetujui: pemasukan accrual per bulan/tahun iuran, pengeluaran cash-flow per tanggal, saldo = historis — snapshot membekukan **hasil**, bukan mengubah **cara** hitung
 
-*(Total 23 FR — FR-06/07/08/09/12/14 diamendemen V1.1 2026-09-02: FR-06 rewrite mayor alur Speed-Tap, lainnya minor visual/UX. Tidak ada FR baru; tidak ada perubahan endpoint/API/scope keamanan — amendemen murni lapisan presentasi & alur input, kecuali drawer edit/hapus payment yang kini punya konsumen UI nyata (FR-08), PATCH/DELETE sudah ada sejak T-21.)*
+### Modul 8: Notifikasi & Pengingat (V1.1 — amendemen 2026-09-04)
+
+**FR-24: Pengingat WhatsApp (WA Reminder)**
+- **Input:** Data anggota Belum Bayar (nama + no HP) pada halaman /anggota (row anggota)
+- **Proses:** Admin tap tombol "WA" → sistem buka WhatsApp (deep-link `https://wa.me/<nomor>?text=<pesan>`) di tab/aplikasi baru dengan pesan pengingat yang sudah terisi: "Halo {nama}, pengingat iuran kas bulan {bulan} sebesar {nominal} ya. Terima kasih 🙏". Nomor dikonversi otomatis ke format internasional (awalan `0` → `62`, `62` dipertahankan, fallback prepend `62`); nominal default "Rp 30.000" (iuran bulanan standar). Admin tinggal tekan kirim di WhatsApp — TIDAK ada pengiriman otomatis/push notification.
+- **Output:** WhatsApp terbuka dengan chat ke anggota target + teks pengingat siap kirim
+- **Aturan Bisnis:** Hanya admin; tombol hanya tampil untuk anggota **aktif** yang **Belum Bayar** periode berjalan (mengikuti periode yang dipilih di /anggota); murni deep-link sisi client — tanpa endpoint API baru, tanpa perubahan schema, tanpa integrasi WhatsApp Business API (out of scope V1); tap tombol WA tidak memicu aksi lain di kartu/row (tidak flip status bayar, tidak buka drawer). *Catatan amendemen 2026-09-04 (sesi lanjutan): penyempitan scope — tombol WA hanya di **/anggota (row)**; tombol di /pembayaran (MemberCard) DIHAPUS (fix aksesibilitas nested interactive + keputusan sadar: /pembayaran fokus Speed-Tap, /anggota fokus manajemen + komunikasi).*
+
+*(Total 24 FR — FR-06/07/08/09/12/14 diamendemen V1.1 2026-09-02: FR-06 rewrite mayor alur Speed-Tap, lainnya minor visual/UX. FR-24 BARU 2026-09-04 (WA reminder — user-directed, diimplementasi 2026-09-04). Tidak ada perubahan endpoint/API/scope keamanan — amendemen murni lapisan presentasi & alur input, kecuali drawer edit/hapus payment yang kini punya konsumen UI nyata (FR-08), PATCH/DELETE sudah ada sejak T-21.)*
 
 ---
 
@@ -309,7 +318,7 @@ KasSurs adalah aplikasi web sederhana berbasis mobile untuk mengelola kas bulana
 ## 📄 BAGIAN 6: Out of Scope & Dependensi
 
 ### Out of Scope (Tidak Dikerjakan di V1)
-- Notifikasi otomatis (WhatsApp/email/push) untuk pengingat bayar atau tagihan jatuh tempo — ditunda ke v2
+- Notifikasi otomatis (WhatsApp/email/push) untuk pengingat bayar atau tagihan jatuh tempo — ditunda ke v2 (FR-24 V1.2 adalah deep-link MANUAL yang admin tap sendiri, bukan pengiriman otomatis — tetap in scope)
 - Fitur denda/telat bayar otomatis — belum ada aturan denda yang disepakati, ditunda sampai ada keputusan
 - Anggota submit konfirmasi bayar mandiri (self-report) dengan approval admin — sudah diputuskan anggota view-only saja
 - OTP/WhatsApp verification untuk login — sudah diputuskan pakai No HP + PIN sederhana

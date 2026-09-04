@@ -111,7 +111,7 @@ kassurs/
 │   │   ├── audit.ts                   # helper pencatatan audit log
 │   │   ├── dashboard.ts               # getDashboardSummary — dipakai RSC + route summary
 │   │   ├── report-snapshot.ts         # FR-23 snapshot beku (+ pg_advisory_xact_lock race guard)
-│   │   ├── format.ts                  # NAMA_BULAN/formatRupiah/todayISO WIB-safe (deepening #3)
+│   │   ├── format.ts                  # NAMA_BULAN/formatRupiah/todayISO WIB-safe (deepening #3) + toWaNumber/waReminderUrl (WA deep-link, 2026-09-04)
 │   │   ├── validation.ts              # dateOnly/minimalSatuField/parseBulanTahunQuery (deepening #4)
 │   │   ├── types.ts                   # kontrak API tunggal (26 interface + 12 union type)
 │   │   └── utils.ts                   # cn() — clsx + tailwind-merge

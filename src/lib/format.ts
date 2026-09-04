@@ -56,3 +56,19 @@ export function wibDateParts(): { tahun: number; bulan: number; tanggal: number 
   const wib = new Date(Date.now() + 7 * 60 * 60 * 1000);
   return { tahun: wib.getUTCFullYear(), bulan: wib.getUTCMonth() + 1, tanggal: wib.getUTCDate() };
 }
+
+// "08123..." → "628123..." — format internasional WhatsApp (wa.me).
+export function toWaNumber(noHp: string): string {
+  const digits = noHp.replace(/\D/g, "");
+  if (digits.startsWith("0")) return "62" + digits.slice(1);
+  if (digits.startsWith("62")) return digits;
+  return "62" + digits;
+}
+
+export function waReminderUrl(nama: string, noHp: string, bulan: string, nominal: string): string {
+  const nomor = toWaNumber(noHp);
+  const pesan = encodeURIComponent(
+    `Halo ${nama}, pengingat iuran kas bulan ${bulan} sebesar ${nominal} ya. Terima kasih 🙏`
+  );
+  return `https://wa.me/${nomor}?text=${pesan}`;
+}

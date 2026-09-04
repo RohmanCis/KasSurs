@@ -20,13 +20,13 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, Search, UserPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, MessageCircle, Search, UserPlus } from "lucide-react";
 import MemberForm from "@/components/forms/MemberForm";
 import BottomNav from "@/components/layout/BottomNav";
 import LogoutButton from "@/components/ui/LogoutButton";
 import NeoButton from "@/components/ui/NeoButton";
 import { cn } from "@/lib/utils";
-import { NAMA_BULAN } from "@/lib/format";
+import { NAMA_BULAN, waReminderUrl } from "@/lib/format";
 import type {
   MemberDTO,
   MemberDeactivateErrorResponse,
@@ -410,13 +410,16 @@ export default function AnggotaPage() {
             {visible.map((m) => {
               const expanded = expandedId === m.id;
               const lunas = m.statusBayarBulanIni === "LUNAS";
+              const showWa = m.statusAktif && !lunas;
               return (
                 <li
                   key={m.id}
                   className={cn(
-                    // :active merambat ke ancestor — shadow li hilang saat
-                    // inner button ditekan, seirama translate-nya (n7)
-                    "rounded-xl border-2 border-black bg-white shadow-neo-sm active:shadow-none",
+                    // flex-wrap: panel expand (w-full) turun ke baris penuh
+                    // di bawah baris tombol-expand + tombol WA yang sejajar.
+                    // items-stretch: WA slab mengikuti tinggi row, bukan
+                    // mendikte tinggi list.
+                    "flex flex-wrap items-stretch rounded-xl border-2 border-black bg-white shadow-neo-sm",
                     !m.statusAktif && "opacity-70"
                   )}
                 >
@@ -425,11 +428,12 @@ export default function AnggotaPage() {
                     onClick={() => toggleRow(m.id)}
                     aria-expanded={expanded}
                     data-testid={`anggota-row-${m.id}`}
-                    // Ring fokus mengikuti box element ini — button wajib
-                    // rounded (xl 12px − border 2px = 10px) agar inset ring
-                    // sejajar tepi kartu, bukan persegi di dalam kartu.
-                    // focus-visible (bukan focus): klik mouse tak menyalakan ring.
-                    className="flex w-full items-center justify-between gap-3 rounded-[10px] px-3 py-2.5 text-left neo-press neo-press-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black"
+                    // Radius kanan mengikuti kehadiran WA slab — tanpa WA,
+                    // sudut kanan expander harus menutup kartu rounded-xl.
+                    className={cn(
+                      "flex min-w-0 flex-1 items-center justify-between gap-3 px-3 py-2.5 text-left neo-press neo-press-sm active:shadow-none focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black",
+                      showWa ? "rounded-l-[10px]" : "rounded-[10px]"
+                    )}
                   >
                     <span className="min-w-0">
                       <span className="flex flex-wrap items-center gap-1.5">
@@ -463,9 +467,27 @@ export default function AnggotaPage() {
                     )}
                   </button>
 
+                  {/* WA reminder — sibling tombol expand (bukan nested):
+                      anchor valid HTML di samping button, bukan di dalamnya.
+                      Treatment secondary outline (bg-white + ink darkgreen):
+                      solid neo-green dicadangkan untuk status LUNAS, agar
+                      hijau tidak bermakna ganda saat scan list. */}
+                  {showWa && (
+                    <a
+                      href={waReminderUrl(m.nama, m.noHp, NAMA_BULAN[bulan - 1], "Rp 30.000")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Kirim pengingat WhatsApp ke ${m.nama}`}
+                      className="flex min-h-[44px] min-w-[44px] shrink-0 flex-col items-center justify-center gap-0.5 rounded-r-[10px] border-l-2 border-black bg-white neo-press neo-press-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black"
+                    >
+                      <MessageCircle className="h-4 w-4 stroke-[2.5] text-neo-darkgreen" aria-hidden="true" />
+                      <span className="text-[8px] font-extrabold uppercase leading-none text-neo-darkgreen">WA</span>
+                    </a>
+                  )}
+
                   {/* Panel expand: aksi / form edit / konfirmasi nonaktif */}
                   {expanded && (
-                    <div className="border-t-2 border-black px-3 py-3">
+                    <div className="w-full border-t-2 border-black px-3 py-3">
                       {rowError?.id === m.id && (
                         <p
                           role="alert"

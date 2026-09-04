@@ -177,17 +177,12 @@ export default function LoginForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <div className="flex justify-between items-center">
-          <label
-            htmlFor="pin-0"
-            className="text-[11px] font-extrabold uppercase tracking-wider text-black"
-          >
-            PIN Keamanan (4-6 Digit)
-          </label>
-          <span className="text-[9px] bg-neo-pink px-1.5 py-0.5 border border-black rounded font-extrabold uppercase tabular-nums">
-            Bcrypt Hash
-          </span>
-        </div>
+        <label
+          htmlFor="pin-0"
+          className="text-[11px] font-extrabold uppercase tracking-wider text-black"
+        >
+          PIN Keamanan (4-6 Digit)
+        </label>
         <div className="grid grid-cols-6 gap-1.5" role="group" aria-label="PIN 6 digit">
           {digits.map((d, i) => (
             <input
@@ -215,6 +210,9 @@ export default function LoginForm() {
             />
           ))}
         </div>
+        <p className="mt-1 text-[10px] font-bold text-slate-600">
+          Lupa PIN? Hubungi bendahara untuk reset.
+        </p>
       </div>
 
       <NeoButton

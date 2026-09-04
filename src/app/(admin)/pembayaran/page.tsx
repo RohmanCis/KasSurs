@@ -52,8 +52,8 @@ const BADGE_BARU_MS = 10 * 60 * 1000; // 10 menit (5.10 mitigasi b)
 // Gaya tombol aksi toast sonner (Toaster unstyled — styling per-toast).
 // Inverted hitam di atas kuning (mockup in-app toast baris 785-788).
 const NEO_ACTION_STYLE: CSSProperties = {
-  background: "#000000",
-  color: "#FEF08A",
+  background: "#FFFFFF",
+  color: "#000000",
   border: "2px solid #000000",
   borderRadius: 8,
   fontWeight: 800,
@@ -566,7 +566,7 @@ export default function PembayaranPage() {
           </div>
         )}
 
-        <p className="pt-1 text-center text-[10px] font-bold text-slate-600">
+        <p className="pt-1 text-center text-xs font-bold text-slate-700">
           Tap = catat lunas Rp 30k · Tahan ½ detik = rapel/nominal lain · Tap kartu hijau = edit/hapus
         </p>
       </div>

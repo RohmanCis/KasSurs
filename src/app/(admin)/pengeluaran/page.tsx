@@ -110,10 +110,10 @@ export default function PengeluaranPage() {
     });
   }
 
-  // Sukses → toast sonner PERSISTEN + refresh list bulan berjalan.
+  // Sukses → toast sonner 6 detik + refresh list bulan berjalan.
   function handleSaved(dto: ExpenseDTO) {
-    toast(`Pengeluaran "${dto.deskripsi}" (${formatRupiah(dto.jumlah)}) tersimpan.`, {
-      duration: Infinity, // tidak auto-reset/auto-dismiss — perilaku lama
+    toast.success(`"${dto.deskripsi}" (${formatRupiah(dto.jumlah)}) tersimpan.`, {
+      duration: 6000,
       action: { label: "Input Lagi", onClick: handleInputLagi },
       actionButtonStyle: NEO_ACTION_STYLE,
     });

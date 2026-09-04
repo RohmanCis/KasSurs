@@ -15,6 +15,7 @@ import { Download, FileText, FileSpreadsheet } from "lucide-react";
 import FilterBar from "@/components/ui/FilterBar";
 import LogoutButton from "@/components/ui/LogoutButton";
 import BottomNav from "@/components/layout/BottomNav";
+import { NAMA_BULAN } from "@/lib/format";
 
 type Format = "pdf" | "excel";
 
@@ -71,6 +72,9 @@ export default function LaporanPage() {
       <header className="flex items-center justify-between border-b-[2.5px] border-black bg-neo-orange px-4 py-2.5">
         <div>
           <h1 className="text-xs font-extrabold uppercase text-black">Laporan & Unduh</h1>
+          <span className="mb-1 inline-block rounded border border-black bg-neo-sky px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+            {NAMA_BULAN[bulan - 1]} {tahun}
+          </span>
           <p className="text-xs font-bold tracking-tight text-slate-800">
             Rekap kas per bulan, PDF atau Excel.
           </p>
