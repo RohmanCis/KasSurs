@@ -22,7 +22,7 @@ export default function LoginPage() {
           aria-hidden="true"
           width={64}
           height={64}
-          className="mb-2 inline-block h-16 w-16 shadow-neo"
+          className="mb-2 inline-block h-16 w-16 rounded-2xl shadow-neo"
         />
         <h1 className="text-2xl font-extrabold tracking-tight text-black">KasSurs.</h1>
         <p className="mt-0.5 text-xs font-bold text-slate-700">
