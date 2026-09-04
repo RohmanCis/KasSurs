@@ -91,5 +91,5 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   // /api/:path* → semua route handler; sisa path → halaman kecuali /login + aset statis.
-  matcher: ["/api/:path*", "/((?!_next/static|_next/image|favicon.ico|login).*)"],
+  matcher: ["/api/:path*", "/((?!_next/static|_next/image|favicon.ico|icon.svg|login).*)"],
 };
