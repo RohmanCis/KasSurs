@@ -46,3 +46,43 @@ export function invalidInput(zodResult: ZodFailedResult): NextResponse {
 export function badRequest(message: string): NextResponse {
   return NextResponse.json({ error: "INVALID_INPUT", message }, { status: 400 });
 }
+
+// 409 — POST /api/reports/regenerate tabrakan dengan perhitungan lain yang
+// masih berjalan (transaksi timeout/write conflict, P2028/P2034). Artinya
+// data lama TIDAK berubah — minta klien coba lagi (retry-able, bukan gagal).
+export function regenerateBusy(): NextResponse {
+  return NextResponse.json(
+    {
+      error: "REGENERATE_BUSY",
+      message: "Laporan sedang dihitung ulang. Tunggu sebentar, lalu coba lagi.",
+    },
+    { status: 409 },
+  );
+}
+
+// 500 — regenerate gagal karena sebab lain (DB error non-timeout, P2003
+// sudah dipetakan 401 di route). Pesan generik: detail DB tidak dibocorkan.
+export function regenerateFailed(): NextResponse {
+  return NextResponse.json(
+    { error: "REGENERATE_FAILED", message: "Gagal menghitung ulang laporan. Coba lagi." },
+    { status: 500 },
+  );
+}
+
+// 503 — GET export PDF/Excel saat transaksi perhitungan snapshot
+// timeout/write conflict (P2028/P2034): server sibuk, request ini tidak
+// mengubah apa pun → klien boleh ulang.
+export function serviceBusy(): NextResponse {
+  return NextResponse.json(
+    { error: "SERVICE_BUSY", message: "Laporan sedang sibuk. Coba lagi sebentar." },
+    { status: 503 },
+  );
+}
+
+// 500 — GET export gagal karena error DB lain.
+export function reportFailed(): NextResponse {
+  return NextResponse.json(
+    { error: "REPORT_FAILED", message: "Gagal membuat laporan. Coba lagi." },
+    { status: 500 },
+  );
+}

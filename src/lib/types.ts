@@ -29,7 +29,9 @@ export type PaymentErrorCode = "ALREADY_PAID";
 export type AuditAction = "CREATE" | "UPDATE" | "DELETE";
 
 // Entitas yang dicatat di AuditLog.
-export type AuditEntityType = "Payment" | "Expense" | "Member" | "Category";
+// ReportSnapshot: hanya aksi UPDATE (regenerate menimpa payload beku, L-01) —
+// export pertama TIDAK dicatat (keputusan user, HANDOFF:22).
+export type AuditEntityType = "Payment" | "Expense" | "Member" | "Category" | "ReportSnapshot";
 
 // ===== Auth =====
 export interface LoginRequest {
@@ -259,14 +261,43 @@ export interface ReportSnapshotPayload {
   dibuatPada: string; // ISO datetime — kapan snapshot dibekukan
 }
 
-// Error response endpoint /api/reports/* (T-33).
-// INVALID_INPUT: query bulan/tahun gagal validasi (400).
-// UNAUTHORIZED: sesi invalid (401) — fallback defensif handler.
+// Error response endpoint /api/reports/* (T-33, diperluas L-01).
+// INVALID_INPUT: query/body gagal validasi (400) — termasuk param asing di
+//   GET export (schema strict) & bulan/tahun di luar rentang.
+// UNAUTHORIZED: sesi invalid (401) — fallback defensif handler, atau actor
+//   audit hilang dari DB (P2003) saat regenerate.
+// REGENERATE_BUSY: POST regenerate bertabrakan dengan hitungan lain (409).
+// REGENERATE_FAILED: POST regenerate gagal karena error DB lain (500).
+// SERVICE_BUSY: GET export saat transaksi snapshot timeout (503).
+// REPORT_FAILED: GET export gagal karena error DB lain (500).
 // (RBAC ANGGOTA→403 sudah ditangani middleware, sebelum handler.)
-export type ReportErrorCode = "INVALID_INPUT" | "UNAUTHORIZED";
+export type ReportErrorCode =
+  | "INVALID_INPUT"
+  | "UNAUTHORIZED"
+  | "REGENERATE_BUSY"
+  | "REGENERATE_FAILED"
+  | "SERVICE_BUSY"
+  | "REPORT_FAILED";
 export interface ReportErrorResponse {
   error: ReportErrorCode;
   message: string;
+}
+
+// ===== Regenerate Snapshot (L-01) =====
+// Body POST /api/reports/regenerate: periode target opsional — kosong / {}
+// → default bulan berjalan WIB (bukan UTC: WIB = UTC+7 tetap, tanpa DST).
+export interface ReportRegenerateRequest {
+  bulan?: number; // 1-12
+  tahun?: number; // 1000-9999
+}
+
+// Respon 200 POST /api/reports/regenerate — ringkasan periode hasil hitung
+// ulang (payload penuh tetap tersimpan di ReportSnapshot, tidak dikirim).
+// dibuatPada = kapan payload tersimpan ini dibekukan (ISO datetime).
+export interface ReportRegenerateResponse {
+  periode: { bulan: number; tahun: number };
+  ringkasan: ReportSnapshotPayload["ringkasan"];
+  dibuatPada: string;
 }
 
 // ===== Audit Log (internal, tidak diekspos via API publik di V1) =====

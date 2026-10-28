@@ -8,28 +8,48 @@
 //   res.ok → blob → URL.createObjectURL → a.click() TIDAK berubah
 //   (sudah benar; error JSON terdeteksi, blob URL di-revoke).
 // - Info banner FR-23 (snapshot dibekukan) bahasa awam.
+// - Kartu ke-3 "Hitung Ulang Periode Ini" (koreksi salah input): drawer
+//   konfirmasi → POST /api/reports/regenerate (snapshot ditimpa + audit
+//   log) → unduh PDF periode itu lewat jalur GET yang sama (TIDAK lagi
+//   lewat query param regenerate).
 // =====================================================================
 
-import { useState } from "react";
-import { Download, FileText, FileSpreadsheet } from "lucide-react";
+import { useRef, useState } from "react";
+import dynamic from "next/dynamic";
+import { toast } from "sonner";
+import { Download, FileText, FileSpreadsheet, RotateCcw } from "lucide-react";
 import FilterBar from "@/components/ui/FilterBar";
 import LogoutButton from "@/components/ui/LogoutButton";
 import BottomNav from "@/components/layout/BottomNav";
 import { NAMA_BULAN } from "@/lib/format";
 
+const RegenerateConfirmDrawer = dynamic(
+  () => import("@/components/reports/RegenerateConfirmDrawer"),
+  { ssr: false }
+);
+
 type Format = "pdf" | "excel";
+type Generating = Format | "regenerate";
 
 export default function LaporanPage() {
   const now = new Date();
   const [bulan, setBulan] = useState(now.getMonth() + 1);
   const [tahun, setTahun] = useState(now.getFullYear());
-  const [generating, setGenerating] = useState<Format | null>(null);
+  const [generating, setGenerating] = useState<Generating | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [regenerateOpen, setRegenerateOpen] = useState(false);
+  // Fokus dikembalikan ke pemicu setelah drawer tutup (a11y — pola vaul
+  // tanpa Drawer.Trigger: Radix tidak tahu elemen pemicunya).
+  const regenerateButtonRef = useRef<HTMLButtonElement>(null);
 
-  async function handleExport(format: Format) {
-    if (generating) return;
-    setGenerating(format);
-    setExportError(null);
+  function tutupRegenerate(open: boolean) {
+    setRegenerateOpen(open);
+    if (!open) requestAnimationFrame(() => regenerateButtonRef.current?.focus());
+  }
+
+  // Fetch + unduh mentah (tanpa guard/state) — dipakai jalur export biasa
+  // DAN jalur regenerate (POST dulu, baru unduh PDF periode yang sama).
+  async function unduhLaporan(format: Format): Promise<boolean> {
     try {
       const res = await fetch(`/api/reports/${format}?bulan=${bulan}&tahun=${tahun}`);
       if (!res.ok) {
@@ -41,7 +61,7 @@ export default function LaporanPage() {
           // 401 middleware redirect HTML dsb. — pakai fallback.
         }
         setExportError(message);
-        return;
+        return false;
       }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -52,8 +72,58 @@ export default function LaporanPage() {
       }`;
       a.click();
       URL.revokeObjectURL(url);
+      return true;
     } catch {
       setExportError("Koneksi bermasalah — coba lagi.");
+      return false;
+    }
+  }
+
+  async function handleExport(format: Format) {
+    if (generating) return;
+    setGenerating(format);
+    setExportError(null);
+    try {
+      await unduhLaporan(format);
+    } finally {
+      setGenerating(null);
+    }
+  }
+
+  // Satu aksi user: hitung ulang snapshot periode ini → unduh PDF baru.
+  async function handleRegenerate() {
+    if (generating) return;
+    setGenerating("regenerate");
+    setExportError(null);
+    try {
+      const res = await fetch("/api/reports/regenerate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bulan, tahun }),
+      });
+      if (!res.ok) {
+        let message = `Gagal menghitung ulang laporan (HTTP ${res.status}).`;
+        try {
+          const body = (await res.json()) as { message?: string };
+          if (body.message) message = body.message;
+        } catch {
+          // 401 middleware redirect HTML dsb. — pakai fallback.
+        }
+        setExportError(message);
+        tutupRegenerate(false); // pesan error tak terlihat di balik overlay
+        return;
+      }
+      // Snapshot sudah ter-refresh (200) — unduh ulang via jalur GET.
+      const ok = await unduhLaporan("pdf");
+      if (!ok) {
+        tutupRegenerate(false); // idem: error tampil di kotak alert halaman
+        return;
+      }
+      toast.success(`Laporan ${NAMA_BULAN[bulan - 1]} ${tahun} dihitung ulang.`);
+      tutupRegenerate(false);
+    } catch {
+      setExportError("Koneksi bermasalah — coba lagi.");
+      tutupRegenerate(false);
     } finally {
       setGenerating(null);
     }
@@ -107,7 +177,8 @@ export default function LaporanPage() {
         >
           <p className="text-[11px] font-bold text-black">
             Laporan per periode dibekukan saat export pertama — export ulang
-            periode yang sama menghasilkan angka yang sama.
+            periode yang sama menghasilkan angka yang sama. Kalau ada salah
+            input, pakai Hitung Ulang Periode Ini.
           </p>
         </div>
 
@@ -169,8 +240,48 @@ export default function LaporanPage() {
             </div>
             <Download className="h-4 w-4 stroke-[2.5]" aria-hidden="true" />
           </button>
+
+          {/* Kartu ke-3: koreksi snapshot (FR-23) — buka drawer konfirmasi,
+              bukan langsung POST (aksi menimpa laporan tersimpan). */}
+          <button
+            ref={regenerateButtonRef}
+            type="button"
+            onClick={() => {
+              setExportError(null);
+              setRegenerateOpen(true);
+            }}
+            disabled={generating !== null}
+            data-testid="regenerate-button"
+            className={`${exportCardBase} bg-white text-black`}
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg border-2 border-black bg-white">
+                <RotateCcw className="h-4 w-4 stroke-[2.5] text-neo-darkred" aria-hidden="true" />
+              </div>
+              <div>
+                <div className="text-xs font-extrabold">
+                  {generating === "regenerate" ? "MENGHITUNG ULANG..." : "HITUNG ULANG PERIODE INI"}
+                </div>
+                <div className="text-[10px] font-bold text-slate-800">
+                  Koreksi salah input — angka laporan dihitung ulang dari data terbaru
+                </div>
+              </div>
+            </div>
+            <RotateCcw className="h-4 w-4 stroke-[2.5]" aria-hidden="true" />
+          </button>
         </div>
       </div>
+
+      {regenerateOpen && (
+        <RegenerateConfirmDrawer
+          open
+          onOpenChange={tutupRegenerate}
+          bulan={bulan}
+          tahun={tahun}
+          loading={generating === "regenerate"}
+          onConfirm={handleRegenerate}
+        />
+      )}
 
       <BottomNav />
     </main>

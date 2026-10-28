@@ -8,15 +8,18 @@
 //
 // FR-23: getOrCreateSnapshot — export pertama periode → hitung live +
 // bekukan; re-export periode sama → render dari payload beku (angka tidak
-// berubah walau ada rapel/koreksi kemudian); ?regenerate=true → hitung
-// ulang + timpa. PDF & Excel bersumber satu snapshot.
+// berubah walau ada rapel/koreksi kemudian). PDF & Excel bersumber satu
+// snapshot. Jalur ini MURNI BACA: koreksi snapshot pindah ke POST
+// /api/reports/regenerate (L-01), dan query param asing (termasuk sisa
+// `?regenerate=true`) ditolak 400 oleh schema strict.
 // =====================================================================
 
 import { NextResponse } from "next/server";
-import { getOrCreateSnapshot, reportQuerySchema } from "@/lib/report-snapshot";
+import { getOrCreateSnapshot, reportQuerySchema, RegenerateBusyError } from "@/lib/report-snapshot";
 import { generateReportPdf } from "@/lib/export/pdf";
 import { getSessionOr401 } from "@/lib/api/session";
-import { badRequest } from "@/lib/api/respond";
+import { badRequest, reportFailed, serviceBusy } from "@/lib/api/respond";
+import type { ReportSnapshotPayload } from "@/lib/types";
 
 export async function GET(request: Request) {
   const session = await getSessionOr401();
@@ -24,12 +27,9 @@ export async function GET(request: Request) {
   // RBAC ANGGOTA→403 sudah ditangani middleware (/api/reports ADMIN-only).
 
   const url = new URL(request.url);
-  const parsed = reportQuerySchema.safeParse({
-    bulan: url.searchParams.get("bulan"),
-    tahun: url.searchParams.get("tahun"),
-    // get() → null saat tidak ada; zod optional hanya terima undefined.
-    regenerate: url.searchParams.get("regenerate") ?? undefined,
-  });
+  // Seluruh searchParams di-parse (bukan hanya bulan/tahun): schema strict →
+  // param tak dikenal jadi 400, bukan di-strip diam-diam.
+  const parsed = reportQuerySchema.safeParse(Object.fromEntries(url.searchParams));
   if (!parsed.success) {
     return badRequest(parsed.error.issues[0]?.message ?? "Query bulan/tahun tidak valid");
   }
@@ -38,9 +38,17 @@ export async function GET(request: Request) {
   const now = new Date();
   const bulan = parsed.data.bulan ?? now.getUTCMonth() + 1;
   const tahun = parsed.data.tahun ?? now.getUTCFullYear();
-  const regenerate = parsed.data.regenerate === "true";
 
-  const payload = await getOrCreateSnapshot(bulan, tahun, session.memberId, regenerate);
+  let payload: ReportSnapshotPayload;
+  try {
+    payload = await getOrCreateSnapshot(bulan, tahun, session.memberId);
+  } catch (err) {
+    // Transaksi perhitungan snapshot timeout/bentrok (P2028/P2034) → 503:
+    // server sibuk, tidak ada data yang berubah, klien boleh ulang.
+    if (err instanceof RegenerateBusyError) return serviceBusy();
+    console.error("export laporan PDF gagal:", err);
+    return reportFailed();
+  }
   const bytes = generateReportPdf(payload);
 
   const filename = `laporan-kas-${tahun}-${String(bulan).padStart(2, "0")}.pdf`;

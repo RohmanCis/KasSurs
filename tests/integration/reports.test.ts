@@ -1,9 +1,14 @@
-// Integration test — GET /api/reports/pdf & /api/reports/excel (T-33) —
-// FR-15/FR-16/FR-17/FR-23 (snapshot laporan beku).
+// Integration test — GET /api/reports/pdf & /api/reports/excel (T-33) +
+// POST /api/reports/regenerate (L-01) — FR-15/FR-16/FR-17/FR-23.
 // Pattern sama tests/integration/dashboard.test.ts: env .env.local dimuat
 // manual; beforeAll + dynamic import (tsconfig target es5, no top-level
 // await); next/headers cookies() di-mock; middleware() call langsung utk
 // RBAC (ANGGOTA → 403 sebelum handler).
+//
+// L-01: koreksi snapshot TIDAK lagi lewat `?regenerate=true` di GET export
+// (jalur GET murni baca — param asing → 400) melainkan POST
+// /api/reports/regenerate. Assert periode default WIB + audit log ada di
+// tests/integration/reports-regenerate.test.ts (file ini fokus jalur GET).
 //
 // PERIODE TEST = 2099-12 (bulan/tahun jauh di masa depan): file test lain
 // hanya menulis bulan/tahun berjalan → data periode test ini deterministik
@@ -45,8 +50,10 @@ vi.mock("next/headers", () => ({
 }));
 
 type GetHandler = (request: Request) => Promise<Response>;
+type PostHandler = (request: Request) => Promise<Response>;
 let pdfGET: GetHandler;
 let excelGET: GetHandler;
+let regeneratePOST: PostHandler;
 let prisma: typeof import("@/lib/prisma")["prisma"];
 let signSession: typeof import("@/lib/auth")["signSession"];
 let middleware: typeof import("@/middleware")["middleware"];
@@ -75,6 +82,14 @@ function pdfUrl(params: string): Request {
 }
 function excelUrl(params: string): Request {
   return new Request(`http://localhost/api/reports/excel?${params}`);
+}
+// POST regenerate (L-01): periode di body JSON, bukan query.
+function regenerateUrl(body?: unknown): Request {
+  return new Request("http://localhost/api/reports/regenerate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
 }
 
 async function readSnapshot(): Promise<ReportSnapshotPayload> {
@@ -116,6 +131,7 @@ async function exportPdfStable(): Promise<{ payload: ReportSnapshotPayload; expe
 beforeAll(async () => {
   ({ GET: pdfGET } = await import("@/app/api/reports/pdf/route"));
   ({ GET: excelGET } = await import("@/app/api/reports/excel/route"));
+  ({ POST: regeneratePOST } = await import("@/app/api/reports/regenerate/route"));
   ({ prisma } = await import("@/lib/prisma"));
   ({ signSession } = await import("@/lib/auth"));
   ({ middleware } = await import("@/middleware"));
@@ -267,9 +283,28 @@ describe("GET /api/reports/pdf & /api/reports/excel", () => {
     expect(after.detailMasuk).toHaveLength(2); // Budi & Zainab saja, Siti TIDAK masuk
   });
 
-  it("regenerate=true → hitung ulang: totalMasuk naik sesuai payment baru (M1 konsisten)", async () => {
+  it("regenerate lewat GET export → 400 (jalur GET murni baca, param asing ditolak)", async () => {
+    // L-01: kontrak lama `?regenerate=true` dihapus — schema strict menolak
+    // field tak dikenal, jadi percobaan koreksi lewat GET tidak diam-diam
+    // jadi no-op (dulu: lolos lalu menimpa snapshot).
     const res = await pdfGET(pdfUrl(`bulan=${T_BULAN}&tahun=${T_TAHUN}&regenerate=true`));
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toMatchObject({ error: "INVALID_INPUT" });
+
+    // Param asing lain juga ditolak (bukan hanya regenerate) — sedangkan GET
+    // tanpa param asing tetap lolos (jaga-jaga .strict() tidak over-reject).
+    const asing = await excelGET(excelUrl(`bulan=${T_BULAN}&tahun=${T_TAHUN}&foo=bar`));
+    expect(asing.status).toBe(400);
+    const normal = await pdfGET(pdfUrl(`bulan=${T_BULAN}&tahun=${T_TAHUN}`));
+    expect(normal.status).toBe(200);
+  });
+
+  it("POST /api/reports/regenerate → hitung ulang: totalMasuk naik sesuai payment baru (M1 konsisten)", async () => {
+    const res = await regeneratePOST(regenerateUrl({ bulan: T_BULAN, tahun: T_TAHUN }));
     expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.periode).toEqual({ bulan: T_BULAN, tahun: T_TAHUN });
+    expect(body.dibuatPada).toBeTypeOf("string");
 
     const after = await readSnapshot();
     // Deterministik: filter bulan/tahun periode 2099-12 hanya milik test ini.
@@ -277,6 +312,10 @@ describe("GET /api/reports/pdf & /api/reports/excel", () => {
     expect(after.ringkasan.jumlahLunas).toBe(2); // Budi + Siti (Zainab NONAKTIF tidak dihitung — pre-fix = 3)
     expect(after.detailMasuk).toHaveLength(3);
     expect(after.detailMasuk.map((m) => m.memberNama).sort()).toEqual(["Budi", "Siti", "Zainab"]);
+    // Respons = ringkasan payload yang BENAR-BENAR tersimpan (bukan hitungan
+    // terpisah yang bisa menyimpang dari snapshot).
+    expect(body.ringkasan).toEqual(after.ringkasan);
+    expect(body.dibuatPada).toBe(after.dibuatPada);
     // saldoAkhirPeriode = Σ seluruh histori s.d. akhir periode — berisi data
     // file test lain (bulan berjalan) → TIDAK di-assert absolut (non-deterministik
     // di DB dev berbagi); yang diuji di sini adalah perilaku freeze/regenerate.
